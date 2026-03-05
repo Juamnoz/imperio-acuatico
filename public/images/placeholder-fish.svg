@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#0C2526" rx="12"/>
+  <circle cx="200" cy="120" r="50" fill="#0D7377" opacity="0.2"/>
+  <text x="200" y="138" font-family="serif" font-size="56" text-anchor="middle">🐠</text>
+  <text x="200" y="185" font-family="Georgia,serif" font-size="15" fill="#4DBFC4" text-anchor="middle">Imperio Acuático</text>
+</svg>
