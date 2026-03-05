@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Blog' }
 
 export default async function BlogPage() {
-  let posts = []
+  let posts: Awaited<ReturnType<typeof db.blogPost.findMany>> = []
   try {
     posts = await db.blogPost.findMany({
       where: { published: true },
