@@ -28,8 +28,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(products)
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error)
-    console.error('GET /api/products error:', msg)
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('GET /api/products error:', error)
+    return NextResponse.json({ error: 'Error al obtener productos' }, { status: 500 })
   }
 }
