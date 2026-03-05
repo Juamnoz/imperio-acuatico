@@ -50,7 +50,7 @@ export default function RootLayout({
         <Providers>
           <Navbar />
           <CartDrawer />
-          <main className="pb-16 md:pb-0 md:pt-16">
+          <main className="pb-16 md:pb-0 md:pt-20">
             {children}
           </main>
           <Footer />

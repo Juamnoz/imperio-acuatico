@@ -62,7 +62,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               onError={(e) => {
                 const target = e.target as HTMLImageElement
-                target.src = '/images/placeholder-fish.jpg'
+                target.src = '/logo-white.png'
               }}
             />
             {/* Teal shimmer overlay on hover */}

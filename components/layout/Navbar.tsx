@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ShoppingCart, Search, MessageCircle, ChevronDown } from 'lucide-react'
+
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCartStore } from '@/stores/cart-store'
 import { MegaMenu } from './MegaMenu'
@@ -35,16 +36,17 @@ export function Navbar() {
       )}
     >
       <nav className="relative container mx-auto max-w-7xl px-6">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-20 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-lg">🐠</div>
-              <div>
-                <span className="font-display text-lg font-bold text-foreground">Imperio</span>
-                <span className="font-display text-lg font-bold text-primary"> Acuático</span>
-              </div>
-            </div>
+          <Link href="/" className="flex items-center shrink-0 overflow-visible">
+            <Image
+              src="/logo-white.png"
+              alt="Imperio Acuático"
+              width={300}
+              height={95}
+              className="h-20 w-auto object-contain"
+              priority
+            />
           </Link>
 
           {/* Nav links */}

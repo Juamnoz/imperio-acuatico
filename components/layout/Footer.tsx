@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Instagram, Youtube, MessageCircle, Mail, MapPin, Clock, Fish } from 'lucide-react'
 
 const hours = [
@@ -16,12 +17,14 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
           {/* Brand */}
           <div className="md:col-span-1">
-            <div className="mb-4 flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-xl">🐠</div>
-              <div>
-                <span className="font-display text-xl font-bold">Imperio</span>
-                <span className="font-display text-xl font-bold text-primary"> Acuático</span>
-              </div>
+            <div className="mb-4">
+              <Image
+                src="/logo-white.png"
+                alt="Imperio Acuático"
+                width={240}
+                height={75}
+                className="h-16 w-auto object-contain"
+              />
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Tienda especializada en peces ornamentales y accesorios acuáticos en Caldas, Antioquia.

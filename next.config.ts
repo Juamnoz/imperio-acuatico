@@ -2,10 +2,13 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   images: {
+    unoptimized: true,
     remotePatterns: [
-      { protocol: 'https', hostname: '**' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'plus.unsplash.com' },
+      { protocol: 'https', hostname: '**.unsplash.com' },
+      { protocol: 'https', hostname: 'upload.wikimedia.org' },
     ],
-    unoptimized: process.env.NODE_ENV === 'development',
   },
   experimental: {
     serverActions: {
