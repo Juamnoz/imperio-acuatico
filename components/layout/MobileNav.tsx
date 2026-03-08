@@ -20,7 +20,7 @@ export function MobileNav() {
   const totalItems = getTotalItems()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden glass border-t border-border"
+    <nav className="fixed bottom-2 left-3 right-3 z-40 md:hidden glass border border-border rounded-2xl"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex items-stretch">

@@ -19,7 +19,7 @@ export function HeroSection() {
       {/* Aquarium environment: rocks, plants, bubbles, sand */}
       <WaterCanvas />
 
-      {/* PixiJS-style fish sprites — Option A */}
+      {/* 3D fish */}
       <FishCanvas />
 
       {/* Content */}

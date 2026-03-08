@@ -12,7 +12,7 @@ const hours = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-card/50 mt-20">
+    <footer className="border-t border-border bg-card/50 mt-20 pb-24 md:pb-0">
       <div className="container mx-auto max-w-7xl px-6 py-12">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
           {/* Brand */}

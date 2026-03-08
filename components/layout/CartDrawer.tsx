@@ -26,16 +26,21 @@ export function CartDrawer() {
             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
           />
 
-          {/* Drawer */}
+          {/* Drawer: bottom-sheet on mobile, side drawer on desktop */}
           <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col glass"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-3xl glass md:inset-x-auto md:right-0 md:top-0 md:h-full md:max-h-full md:w-full md:max-w-md md:rounded-none"
           >
+            {/* Drag handle (mobile) */}
+            <div className="flex items-center justify-center pt-3 pb-1 md:hidden">
+              <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+            </div>
+
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+            <div className="flex items-center justify-between border-b border-border px-6 py-3 md:py-4">
               <div className="flex items-center gap-3">
                 <ShoppingCart className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold">Tu carrito</h2>

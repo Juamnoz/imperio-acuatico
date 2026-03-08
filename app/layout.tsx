@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono, Cormorant_Garamond } from 'next/font/google'
+import { Geist, Geist_Mono, Outfit } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/layout/Providers'
 import { Navbar } from '@/components/layout/Navbar'
 import { MobileNav } from '@/components/layout/MobileNav'
 import { CartDrawer } from '@/components/layout/CartDrawer'
 import { Footer } from '@/components/layout/Footer'
+import { SearchSheet } from '@/components/layout/SearchSheet'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -17,10 +18,10 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
-const cormorant = Cormorant_Garamond({
-  variable: '--font-cormorant',
+const outfit = Outfit({
+  variable: '--font-display',
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
 })
 
 export const metadata: Metadata = {
@@ -45,15 +46,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable}`}>
+    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable}`}>
       <body className="antialiased min-h-screen bg-background text-foreground">
         <Providers>
           <Navbar />
           <CartDrawer />
-          <main className="pb-16 md:pb-0 md:pt-20">
+          <main className="pb-20 md:pb-0 md:pt-20">
             {children}
           </main>
           <Footer />
+          <SearchSheet />
           <MobileNav />
         </Providers>
       </body>
