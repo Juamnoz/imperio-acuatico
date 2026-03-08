@@ -502,7 +502,7 @@ export function WaterCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none absolute inset-0 z-0 w-full h-full"
+      className="pointer-events-none absolute inset-x-0 top-0 z-0 h-screen w-full"
       aria-hidden
     />
   )

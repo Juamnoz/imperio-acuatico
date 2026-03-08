@@ -111,7 +111,7 @@ function Scene() {
 /* ─── Main export ─── */
 export function FishCanvas() {
   return (
-    <div className="pointer-events-none absolute inset-0 z-[1]" aria-hidden>
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-screen" aria-hidden>
       <Canvas
         camera={{ position: [0, 1.5, 22], fov: 70, near: 0.1, far: 150 }}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}

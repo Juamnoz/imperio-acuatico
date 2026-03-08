@@ -11,10 +11,10 @@ export function HeroSection() {
   return (
     <section className="relative flex min-h-screen items-start overflow-hidden">
       {/* Deep ocean gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[oklch(0.09_0.025_210)] via-[oklch(0.10_0.03_210)] to-[oklch(0.07_0.02_200)]" />
+      <div className="absolute inset-x-0 top-0 h-screen bg-gradient-to-b from-[oklch(0.09_0.025_210)] via-[oklch(0.10_0.03_210)] to-[oklch(0.07_0.02_200)]" />
 
       {/* Radial glow top */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,oklch(0.52_0.1_195_/_20%),transparent)]" />
+      <div className="absolute inset-x-0 top-0 h-screen bg-[radial-gradient(ellipse_70%_40%_at_50%_0%,oklch(0.52_0.1_195_/_20%),transparent)]" />
 
       {/* Aquarium environment: rocks, plants, bubbles, sand */}
       <WaterCanvas />
