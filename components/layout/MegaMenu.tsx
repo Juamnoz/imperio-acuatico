@@ -99,9 +99,9 @@ export function MegaMenu({ isOpen, onClose }: MegaMenuProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="absolute left-0 right-0 top-full z-40 glass border-t border-border shadow-2xl shadow-black/50"
+            className="absolute left-4 right-4 top-full z-40 glass border border-border rounded-2xl shadow-2xl shadow-black/50 mt-2"
           >
-            <div className="container mx-auto max-w-7xl flex" style={{ minHeight: 380 }}>
+            <div className="container mx-auto max-w-7xl flex overflow-hidden rounded-2xl" style={{ minHeight: 380 }}>
 
               {/* ── Left sidebar ── */}
               <div className="w-56 shrink-0 border-r border-border/50 py-4">

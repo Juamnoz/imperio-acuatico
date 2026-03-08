@@ -31,8 +31,8 @@ export function Navbar() {
   return (
     <header
       className={cn(
-        'fixed top-0 left-0 right-0 z-40 transition-all duration-300 hidden md:block',
-        scrolled ? 'glass shadow-lg shadow-black/20' : 'bg-transparent'
+        'fixed left-4 right-4 z-40 transition-all duration-300 hidden md:block',
+        scrolled ? 'top-3 glass shadow-lg shadow-black/20 rounded-2xl border border-border' : 'top-0 bg-transparent'
       )}
     >
       <nav className="relative container mx-auto max-w-7xl px-6">

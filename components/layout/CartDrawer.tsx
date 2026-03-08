@@ -28,11 +28,11 @@ export function CartDrawer() {
 
           {/* Drawer: bottom-sheet on mobile, side drawer on desktop */}
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            initial={{ y: '100%', x: 0 }}
+            animate={{ y: 0, x: 0 }}
+            exit={{ y: '100%', x: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-3xl glass md:inset-x-auto md:right-0 md:top-0 md:h-full md:max-h-full md:w-full md:max-w-md md:rounded-none"
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-3xl glass md:inset-x-auto md:right-4 md:top-4 md:bottom-4 md:h-auto md:max-h-none md:w-full md:max-w-md md:rounded-2xl md:border md:border-border"
           >
             {/* Drag handle (mobile) */}
             <div className="flex items-center justify-center pt-3 pb-1 md:hidden">

@@ -51,16 +51,31 @@ export function HeroSection() {
             </span>
           </motion.div>
 
-          <motion.h1
+          {/* Neon sign — aquarium decoration */}
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1, ease: 'easeOut' }}
-            className="mt-2 font-display text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl"
+            className="mt-4 inline-block"
           >
-            El Imperio
-            <br />
-            <span className="gradient-text">del Agua</span>
-          </motion.h1>
+            <div className="relative">
+              {/* Neon text */}
+              <h1 className="neon-sign font-display text-5xl font-bold italic leading-[1.1] tracking-tight md:text-7xl select-none">
+                <span className="neon-white">El Imperio</span>
+                <br />
+                <span className="neon-teal">del Agua</span>
+              </h1>
+              {/* Stand / support pole */}
+              <div className="absolute -bottom-5 left-8 md:left-12 flex flex-col items-center">
+                <div className="h-5 w-0.5 bg-gradient-to-b from-white/30 to-white/10 rounded-full" />
+                <div className="h-1.5 w-6 rounded-full bg-white/10 mt-px" />
+              </div>
+              <div className="absolute -bottom-5 right-16 md:right-24 flex flex-col items-center">
+                <div className="h-5 w-0.5 bg-gradient-to-b from-white/30 to-white/10 rounded-full" />
+                <div className="h-1.5 w-6 rounded-full bg-white/10 mt-px" />
+              </div>
+            </div>
+          </motion.div>
 
           <motion.p
             initial={{ opacity: 0, y: 30 }}
