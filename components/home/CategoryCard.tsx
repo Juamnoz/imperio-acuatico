@@ -256,8 +256,314 @@ function AcuariosIcon() {
   )
 }
 
+function DecoracionIcon() {
+  return (
+    <motion.svg viewBox="0 0 40 40" fill="none" className="h-9 w-9">
+      {/* castle tower */}
+      <rect x="14" y="10" width="12" height="22" rx="2" fill="#5C6BC0" />
+      <rect x="10" y="6" width="8" height="8" rx="1" fill="#7986CB" />
+      <rect x="22" y="8" width="8" height="6" rx="1" fill="#7986CB" />
+      {/* windows */}
+      <motion.rect x="17" y="16" width="3" height="4" rx="1.5" fill="#1A237E"
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      />
+      <motion.rect x="22" y="16" width="3" height="4" rx="1.5" fill="#1A237E"
+        animate={{ opacity: [1, 0.5, 1] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      />
+      {/* door */}
+      <path d="M18 32 L18 26 Q20 23 22 26 L22 32Z" fill="#283593" />
+      {/* flag */}
+      <motion.path d="M26 6 L26 2 L32 4 L26 6Z" fill="#EF5350"
+        animate={{ scaleX: [1, 0.8, 1] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ transformOrigin: '26px 4px' }}
+      />
+      {/* bubbles */}
+      <motion.circle cx="10" cy="20" r="1.5" stroke="#90E0EF" strokeWidth="1" fill="none"
+        animate={{ y: [0, -8], opacity: [0.6, 0] }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+      />
+    </motion.svg>
+  )
+}
+
+function AcondicionadoresIcon() {
+  return (
+    <motion.svg viewBox="0 0 40 40" fill="none" className="h-9 w-9">
+      {/* bottle */}
+      <rect x="13" y="14" width="14" height="20" rx="3" fill="#00897B" />
+      <rect x="16" y="8" width="8" height="8" rx="2" fill="#00695C" />
+      {/* cap */}
+      <rect x="17" y="5" width="6" height="4" rx="2" fill="#004D40" />
+      {/* label */}
+      <rect x="15" y="20" width="10" height="8" rx="1" fill="white" opacity="0.25" />
+      {/* drop */}
+      <motion.path d="M20 24 Q18 28 20 30 Q22 28 20 24Z" fill="#80CBC4"
+        animate={{ y: [0, 2, 0], scale: [1, 1.1, 1] }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      {/* sparkle */}
+      <motion.circle cx="26" cy="16" r="1.5" fill="#A7FFEB"
+        animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+      />
+    </motion.svg>
+  )
+}
+
+function ParametrosIcon() {
+  return (
+    <motion.svg viewBox="0 0 40 40" fill="none" className="h-9 w-9">
+      {/* test tube */}
+      <rect x="16" y="6" width="8" height="26" rx="4" fill="#1565C0" opacity="0.3" stroke="#42A5F5" strokeWidth="1.5" />
+      {/* liquid inside */}
+      <motion.rect x="17" y="16" width="6" height="15" rx="3" fill="#42A5F5"
+        animate={{ height: [15, 12, 15], y: [16, 19, 16] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      {/* pH scale marks */}
+      <line x1="10" y1="12" x2="15" y2="12" stroke="#EF5350" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="10" y1="18" x2="15" y2="18" stroke="#FFA726" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="10" y1="24" x2="15" y2="24" stroke="#66BB6A" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="10" y1="30" x2="15" y2="30" stroke="#42A5F5" strokeWidth="1.5" strokeLinecap="round" />
+      {/* indicator arrow */}
+      <motion.path d="M28 18 L25 20 L28 22" stroke="#FFA726" strokeWidth="2" fill="none" strokeLinecap="round"
+        animate={{ y: [0, 6, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+      />
+    </motion.svg>
+  )
+}
+
+function AccesoriosIcon() {
+  return (
+    <motion.svg viewBox="0 0 40 40" fill="none" className="h-9 w-9">
+      {/* net handle */}
+      <line x1="8" y1="34" x2="20" y2="14" stroke="#8D6E63" strokeWidth="2.5" strokeLinecap="round" />
+      {/* net ring */}
+      <ellipse cx="24" cy="12" rx="10" ry="8" stroke="#78909C" strokeWidth="2" fill="none" />
+      {/* net mesh */}
+      <path d="M16 16 Q20 24 24 16" stroke="#90A4AE" strokeWidth="1" fill="none" />
+      <path d="M18 14 Q22 22 26 14" stroke="#90A4AE" strokeWidth="1" fill="none" />
+      <path d="M14 12 L34 12" stroke="#90A4AE" strokeWidth="0.8" opacity="0.5" />
+      <path d="M15 16 L33 16" stroke="#90A4AE" strokeWidth="0.8" opacity="0.5" />
+      {/* tiny fish in net */}
+      <motion.g animate={{ rotate: [-10, 10, -10] }} transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ transformOrigin: '24px 12px' }}>
+        <ellipse cx="24" cy="11" rx="4" ry="2.5" fill="#4FC3F7" />
+        <path d="M20 11 L18 9 L18 13 Z" fill="#29B6F6" />
+        <circle cx="26.5" cy="10.5" r="0.8" fill="#0a0a0a" />
+      </motion.g>
+    </motion.svg>
+  )
+}
+
+function PecesGenericoIcon() {
+  return (
+    <motion.svg viewBox="0 0 40 40" fill="none" className="h-9 w-9"
+      animate={{ x: [0, 4, -2, 4, 0] }}
+      transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+    >
+      {/* tail */}
+      <motion.path d="M6 20 L1 13 L1 27 Z" fill="#26C6DA"
+        animate={{ scaleX: [1, 0.7, 1] }}
+        transition={{ duration: 0.5, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
+        style={{ transformOrigin: '6px 20px' }}
+      />
+      {/* body */}
+      <ellipse cx="22" cy="20" rx="14" ry="9" fill="#00BCD4" />
+      {/* stripe */}
+      <ellipse cx="20" cy="22" rx="10" ry="4" fill="#0097A7" opacity="0.5" />
+      {/* dorsal */}
+      <path d="M14 11 Q20 6 27 11" stroke="#00838F" strokeWidth="2" fill="none" strokeLinecap="round"/>
+      {/* shimmer */}
+      <ellipse cx="18" cy="16" rx="5" ry="3" fill="white" opacity="0.2" />
+      {/* eye */}
+      <circle cx="33" cy="18" r="2.5" fill="#0a0a1a" />
+      <circle cx="34" cy="17" r="0.9" fill="white" />
+    </motion.svg>
+  )
+}
+
+function SustratosIcon() {
+  return (
+    <motion.svg viewBox="0 0 40 40" fill="none" className="h-9 w-9">
+      {/* ground layers */}
+      <path d="M4 36 L4 26 Q12 22 20 26 Q28 30 36 26 L36 36Z" fill="#5D4037" />
+      <path d="M4 36 L4 30 Q12 26 20 30 Q28 34 36 30 L36 36Z" fill="#795548" />
+      {/* gravel dots */}
+      <circle cx="10" cy="32" r="2" fill="#8D6E63" />
+      <circle cx="16" cy="34" r="1.5" fill="#6D4C41" />
+      <circle cx="24" cy="32" r="2.5" fill="#8D6E63" />
+      <circle cx="30" cy="34" r="1.8" fill="#6D4C41" />
+      <circle cx="20" cy="30" r="1.5" fill="#A1887F" />
+      {/* plant sprouting */}
+      <motion.path d="M20 24 Q18 16 20 10" stroke="#66BB6A" strokeWidth="2" strokeLinecap="round"
+        animate={{ d: ['M20 24 Q18 16 20 10', 'M20 24 Q22 16 20 10', 'M20 24 Q18 16 20 10'] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.path d="M20 16 Q15 12 13 8" stroke="#81C784" strokeWidth="1.5" strokeLinecap="round"
+        animate={{ rotate: [-5, 5, -5] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ transformOrigin: '20px 16px' }}
+      />
+      <motion.path d="M20 14 Q25 10 27 6" stroke="#81C784" strokeWidth="1.5" strokeLinecap="round"
+        animate={{ rotate: [5, -5, 5] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ transformOrigin: '20px 14px' }}
+      />
+    </motion.svg>
+  )
+}
+
+function MascotasIcon() {
+  return (
+    <motion.svg viewBox="0 0 40 40" fill="none" className="h-9 w-9">
+      {/* turtle shell */}
+      <ellipse cx="20" cy="22" rx="12" ry="9" fill="#689F38" />
+      <path d="M12 18 Q16 14 20 18 Q24 14 28 18" stroke="#558B2F" strokeWidth="2" fill="none" />
+      <path d="M10 22 Q15 18 20 22 Q25 18 30 22" stroke="#558B2F" strokeWidth="2" fill="none" />
+      <path d="M12 26 Q16 22 20 26 Q24 22 28 26" stroke="#558B2F" strokeWidth="2" fill="none" />
+      {/* head */}
+      <motion.g animate={{ x: [0, 2, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
+        <ellipse cx="33" cy="20" rx="5" ry="4" fill="#8BC34A" />
+        <circle cx="35" cy="19" r="1.2" fill="#1a1a00" />
+        <circle cx="35.5" cy="18.5" r="0.4" fill="white" />
+      </motion.g>
+      {/* legs */}
+      <motion.ellipse cx="10" cy="28" rx="3" ry="2" fill="#7CB342"
+        animate={{ rotate: [-10, 10, -10] }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ transformOrigin: '12px 28px' }}
+      />
+      <motion.ellipse cx="30" cy="28" rx="3" ry="2" fill="#7CB342"
+        animate={{ rotate: [10, -10, 10] }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ transformOrigin: '28px 28px' }}
+      />
+      {/* tail */}
+      <path d="M8 22 L4 24" stroke="#7CB342" strokeWidth="2" strokeLinecap="round" />
+    </motion.svg>
+  )
+}
+
+function TermostatosIcon() {
+  return (
+    <motion.svg viewBox="0 0 40 40" fill="none" className="h-9 w-9">
+      {/* thermometer body */}
+      <rect x="17" y="4" width="6" height="26" rx="3" fill="#37474F" />
+      {/* mercury bulb */}
+      <circle cx="20" cy="32" r="5" fill="#E53935" />
+      {/* mercury column */}
+      <motion.rect x="18.5" y="12" width="3" height="18" rx="1.5" fill="#E53935"
+        animate={{ height: [18, 12, 18], y: [12, 18, 12] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      {/* scale marks */}
+      <line x1="24" y1="10" x2="27" y2="10" stroke="#90A4AE" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="24" y1="16" x2="27" y2="16" stroke="#90A4AE" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="24" y1="22" x2="27" y2="22" stroke="#90A4AE" strokeWidth="1.5" strokeLinecap="round" />
+      {/* heat waves */}
+      <motion.path d="M10 28 Q8 26 10 24" stroke="#FF7043" strokeWidth="1.5" fill="none" strokeLinecap="round"
+        animate={{ opacity: [0, 1, 0], x: [-2, 0, -2] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      />
+      <motion.path d="M30 28 Q32 26 30 24" stroke="#FF7043" strokeWidth="1.5" fill="none" strokeLinecap="round"
+        animate={{ opacity: [0, 1, 0], x: [2, 0, 2] }}
+        transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+      />
+    </motion.svg>
+  )
+}
+
+function LamparasIcon() {
+  return (
+    <motion.svg viewBox="0 0 40 40" fill="none" className="h-9 w-9">
+      {/* lamp body */}
+      <rect x="8" y="6" width="24" height="8" rx="3" fill="#455A64" />
+      {/* light beam */}
+      <motion.path d="M10 14 L6 36 L34 36 L30 14Z" fill="#FFF9C4" opacity="0.15"
+        animate={{ opacity: [0.1, 0.2, 0.1] }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      {/* LEDs */}
+      <motion.circle cx="14" cy="14" r="2" fill="#FDD835"
+        animate={{ opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+      />
+      <motion.circle cx="20" cy="14" r="2" fill="#90CAF9"
+        animate={{ opacity: [1, 0.6, 1] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+      />
+      <motion.circle cx="26" cy="14" r="2" fill="#FDD835"
+        animate={{ opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+      />
+      {/* mounting clips */}
+      <rect x="12" y="3" width="3" height="4" rx="1" fill="#546E7A" />
+      <rect x="25" y="3" width="3" height="4" rx="1" fill="#546E7A" />
+    </motion.svg>
+  )
+}
+
+function ServiciosIcon() {
+  return (
+    <motion.svg viewBox="0 0 40 40" fill="none" className="h-9 w-9">
+      {/* wrench */}
+      <motion.g animate={{ rotate: [-15, 15, -15] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ transformOrigin: '20px 20px' }}>
+        <path d="M12 8 L10 6 Q6 6 6 10 L8 12 L20 24" stroke="#78909C" strokeWidth="3" fill="none" strokeLinecap="round" />
+        <line x1="20" y1="24" x2="32" y2="36" stroke="#78909C" strokeWidth="3" strokeLinecap="round" />
+      </motion.g>
+      {/* gear */}
+      <motion.g animate={{ rotate: 360 }} transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+        style={{ transformOrigin: '28px 12px' }}>
+        <circle cx="28" cy="12" r="5" fill="#546E7A" />
+        <circle cx="28" cy="12" r="2.5" fill="#37474F" />
+        <rect x="27" y="5" width="2" height="3" rx="1" fill="#546E7A" />
+        <rect x="27" y="16" width="2" height="3" rx="1" fill="#546E7A" />
+        <rect x="21" y="11" width="3" height="2" rx="1" fill="#546E7A" />
+        <rect x="33" y="11" width="3" height="2" rx="1" fill="#546E7A" />
+      </motion.g>
+      {/* water drop */}
+      <motion.path d="M14 30 Q12 34 14 36 Q16 34 14 30Z" fill="#4FC3F7"
+        animate={{ y: [0, -3, 0], opacity: [1, 0.5, 1] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      />
+    </motion.svg>
+  )
+}
+
+function VariosIcon() {
+  return (
+    <motion.svg viewBox="0 0 40 40" fill="none" className="h-9 w-9">
+      {/* box */}
+      <rect x="6" y="14" width="28" height="20" rx="3" fill="#5C6BC0" />
+      <rect x="6" y="10" width="28" height="6" rx="2" fill="#7986CB" />
+      {/* ribbon */}
+      <rect x="18" y="10" width="4" height="24" rx="1" fill="#EF5350" />
+      <line x1="6" y1="16" x2="34" y2="16" stroke="#EF5350" strokeWidth="2.5" />
+      {/* bow */}
+      <motion.g animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ transformOrigin: '20px 10px' }}>
+        <path d="M20 10 Q14 4 10 8 Q14 12 20 10Z" fill="#EF5350" />
+        <path d="M20 10 Q26 4 30 8 Q26 12 20 10Z" fill="#EF5350" />
+        <circle cx="20" cy="10" r="2" fill="#C62828" />
+      </motion.g>
+      {/* sparkle */}
+      <motion.circle cx="30" cy="8" r="1.5" fill="#FFF59D"
+        animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+        transition={{ duration: 1.5, repeat: Infinity, delay: 0.3 }}
+      />
+    </motion.svg>
+  )
+}
+
 const iconMap: Record<string, React.ReactNode> = {
   'peces-ornamentales': <FishOrnamentalIcon />,
+  'peces': <PecesGenericoIcon />,
   'ciclidos-africanos': <CiclidoAfricanoIcon />,
   'ciclidos-americanos': <CiclidoAmericanoIcon />,
   'peces-limpiadores': <PecesLimpiadoresIcon />,
@@ -268,8 +574,16 @@ const iconMap: Record<string, React.ReactNode> = {
   'alimentos': <AlimentosIcon />,
   'acuarios-combos': <AcuariosIcon />,
   'acuarios': <AcuariosIcon />,
-  'servicios': <EquiposIcon />,
-  'varios': <FishOrnamentalIcon />,
+  'decoracion': <DecoracionIcon />,
+  'acondicionadores': <AcondicionadoresIcon />,
+  'parametros': <ParametrosIcon />,
+  'accesorios': <AccesoriosIcon />,
+  'sustratos': <SustratosIcon />,
+  'mascotas': <MascotasIcon />,
+  'termostatos': <TermostatosIcon />,
+  'lamparas': <LamparasIcon />,
+  'servicios': <ServiciosIcon />,
+  'varios': <VariosIcon />,
 }
 
 /* ─── Card ─── */
