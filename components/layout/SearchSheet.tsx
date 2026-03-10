@@ -29,7 +29,7 @@ export function SearchSheet() {
     return () => { document.body.style.overflow = '' }
   }, [open])
 
-  // Keyboard shortcut: Cmd+K / Ctrl+K
+  // Keyboard shortcut: Cmd+K / Ctrl+K + custom event from MobileNav
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -38,8 +38,13 @@ export function SearchSheet() {
       }
       if (e.key === 'Escape') setOpen(false)
     }
+    const openHandler = () => setOpen(true)
     document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
+    document.addEventListener('open-search', openHandler)
+    return () => {
+      document.removeEventListener('keydown', handler)
+      document.removeEventListener('open-search', openHandler)
+    }
   }, [])
 
   // Debounced search
@@ -90,10 +95,10 @@ export function SearchSheet() {
 
   return (
     <>
-      {/* Trigger button — fixed bottom-right, above MobileNav */}
+      {/* Trigger button — desktop only (mobile uses MobileNav) */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-24 right-4 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:scale-105 hover:shadow-primary/50 md:bottom-6 md:right-6 md:h-11 md:w-11"
+        className="fixed bottom-6 right-6 z-30 hidden md:flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:scale-105 hover:shadow-primary/50"
         aria-label="Buscar productos"
       >
         <Search className="h-5 w-5" />

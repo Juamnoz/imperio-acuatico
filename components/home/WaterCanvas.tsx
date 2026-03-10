@@ -54,12 +54,15 @@ export function WaterCanvas() {
     let raf: number
     let t = 0
 
+    // Use initial innerHeight to avoid iOS address bar resize causing elements to jump
+    const initialHeight = window.innerHeight
+
     const W = () => canvas.width
     const H = () => canvas.height
 
     const resize = () => {
       canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      canvas.height = initialHeight
     }
     resize()
     window.addEventListener('resize', resize)
@@ -502,7 +505,8 @@ export function WaterCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none absolute inset-x-0 top-0 z-0 h-screen w-full"
+      className="pointer-events-none absolute inset-x-0 top-0 z-0 w-full"
+      style={{ height: '100svh' }}
       aria-hidden
     />
   )

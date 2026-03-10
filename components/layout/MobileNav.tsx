@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Store, ShoppingCart, MessageCircle } from 'lucide-react'
+import { Home, Store, ShoppingCart, Search } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCartStore } from '@/stores/cart-store'
 import { cn } from '@/lib/utils'
@@ -11,7 +11,7 @@ const tabs = [
   { label: 'Inicio', href: '/', icon: Home },
   { label: 'Tienda', href: '/tienda', icon: Store },
   { label: 'Carrito', href: '#cart', icon: ShoppingCart, isCart: true },
-  { label: 'Contacto', href: 'https://wa.me/573027471832', icon: MessageCircle, external: true },
+  { label: 'Buscar', href: '#search', icon: Search, isSearch: true },
 ]
 
 export function MobileNav() {
@@ -20,13 +20,24 @@ export function MobileNav() {
   const totalItems = getTotalItems()
 
   return (
-    <nav className="fixed bottom-2 left-3 right-3 z-40 md:hidden glass border border-border rounded-2xl"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-    >
+    <nav className="fixed bottom-2 left-3 right-3 z-40 md:hidden glass border border-border rounded-2xl">
       <div className="flex items-stretch">
         {tabs.map((tab) => {
           const Icon = tab.icon
-          const isActive = !tab.isCart && !tab.external && (tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href))
+          const isActive = !tab.isCart && !(tab as any).isSearch && (tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href))
+
+          if ((tab as any).isSearch) {
+            return (
+              <button
+                key={tab.label}
+                onClick={() => document.dispatchEvent(new Event('open-search'))}
+                className="flex flex-1 flex-col items-center justify-center gap-1 py-3 text-muted-foreground transition-colors hover:text-primary"
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-[10px] font-medium">{tab.label}</span>
+              </button>
+            )
+          }
 
           if (tab.isCart) {
             return (
@@ -53,21 +64,6 @@ export function MobileNav() {
                 </div>
                 <span className="text-[10px] font-medium">{tab.label}</span>
               </button>
-            )
-          }
-
-          if (tab.external) {
-            return (
-              <a
-                key={tab.label}
-                href={tab.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-1 flex-col items-center justify-center gap-1 py-3 text-muted-foreground transition-colors hover:text-green-400"
-              >
-                <Icon className="h-5 w-5" />
-                <span className="text-[10px] font-medium">{tab.label}</span>
-              </a>
             )
           }
 

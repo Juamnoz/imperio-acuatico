@@ -262,9 +262,14 @@ const iconMap: Record<string, React.ReactNode> = {
   'ciclidos-americanos': <CiclidoAmericanoIcon />,
   'peces-limpiadores': <PecesLimpiadoresIcon />,
   'plantas-acuaticas': <PlantasIcon />,
+  'plantas-naturales': <PlantasIcon />,
   'equipos': <EquiposIcon />,
+  'filtros-y-equipos': <EquiposIcon />,
   'alimentos': <AlimentosIcon />,
   'acuarios-combos': <AcuariosIcon />,
+  'acuarios': <AcuariosIcon />,
+  'servicios': <EquiposIcon />,
+  'varios': <FishOrnamentalIcon />,
 }
 
 /* ─── Card ─── */
@@ -288,7 +293,7 @@ export function CategoryCard({ cat, index }: { cat: Category; index: number }) {
     >
       <Link
         href={`/tienda?categoria=${cat.slug}`}
-        className="group flex flex-col items-center gap-3 rounded-2xl border border-border bg-card/50 p-5 text-center transition-all duration-300 hover:border-primary/40 hover:bg-card hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1"
+        className="group flex h-full flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card/50 p-5 text-center transition-all duration-300 hover:border-primary/40 hover:bg-card hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1"
       >
         <motion.div
           className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 transition-all group-hover:bg-primary/20"
