@@ -12,6 +12,7 @@ datasource db {
 
 model Category {
   id          String    @id @default(cuid())
+  alegraId    String?   @unique
   name        String
   slug        String    @unique
   description String?
@@ -24,6 +25,7 @@ model Category {
 
 model Product {
   id          String      @id @default(cuid())
+  alegraId    String?     @unique
   name        String
   slug        String      @unique
   description String?
@@ -60,6 +62,7 @@ model Order {
   mpPreferenceId  String?
   mpPaymentId     String?
   mpStatus        String?
+  alegraInvoiceId String?
   shippingMethod  String?
   trackingNumber  String?
   notes           String?
@@ -76,6 +79,22 @@ model OrderItem {
   name      String
   price     Int
   quantity  Int
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  type      String   // order_confirmation | admin_notification
+  orderId   String?
+  resendId  String?
+  status    String   @default("sent") // sent | failed
+  createdAt DateTime @default(now())
+}
+
+model SiteSettings {
+  key   String @id
+  value String
 }
 
 model BlogPost {

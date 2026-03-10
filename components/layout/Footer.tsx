@@ -80,6 +80,8 @@ export function Footer() {
                 { label: 'Blog', href: '/blog' },
                 { label: 'Políticas de envío', href: '/nosotros#envios' },
                 { label: 'Garantías', href: '/nosotros#garantias' },
+                { label: 'Política de privacidad', href: '/politica-privacidad' },
+                { label: 'Términos y condiciones', href: '/terminos-condiciones' },
               ].map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-muted-foreground transition-colors hover:text-foreground">

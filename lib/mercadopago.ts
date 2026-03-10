@@ -30,22 +30,27 @@ export async function createPreference(
     })
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_URL ?? 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PUBLIC_URL ?? 'http://localhost:3003'
+  const isLocalhost = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')
 
-  const result = await preference.create({
-    body: {
-      items: mpItems,
-      back_urls: {
-        success: `${baseUrl}/checkout/exito?order=${orderId}`,
-        failure: `${baseUrl}/checkout/fallo?order=${orderId}`,
-        pending: `${baseUrl}/checkout/pendiente?order=${orderId}`,
-      },
-      auto_return: 'approved',
-      notification_url: `${baseUrl}/api/webhook/mp`,
-      external_reference: orderId,
-      statement_descriptor: 'IMPERIO ACUATICO',
+  const body: any = {
+    items: mpItems,
+    back_urls: {
+      success: `${baseUrl}/checkout/exito?order=${orderId}`,
+      failure: `${baseUrl}/checkout/fallo?order=${orderId}`,
+      pending: `${baseUrl}/checkout/pendiente?order=${orderId}`,
     },
-  })
+    auto_return: 'approved',
+    external_reference: orderId,
+    statement_descriptor: 'IMPERIO ACUATICO',
+  }
+
+  // MercadoPago rechaza notification_url con localhost
+  if (!isLocalhost) {
+    body.notification_url = `${baseUrl}/api/webhook/mp`
+  }
+
+  const result = await preference.create({ body })
 
   return result
 }

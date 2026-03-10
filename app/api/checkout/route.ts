@@ -36,13 +36,27 @@ export async function POST(req: NextRequest) {
       data: { mpPreferenceId: preference.id },
     })
 
+    // Read sandbox mode from env file dynamically
+    let isSandbox = process.env.NEXT_PUBLIC_MP_SANDBOX === 'true'
+    try {
+      const { readFile } = await import('fs/promises')
+      const { join } = await import('path')
+      const envContent = await readFile(join(process.cwd(), '.env.local'), 'utf-8')
+      const match = envContent.match(/^NEXT_PUBLIC_MP_SANDBOX=(.*)$/m)
+      if (match) isSandbox = match[1].trim() === 'true'
+    } catch {}
+
     return NextResponse.json({
       preferenceId: preference.id,
       initPoint: preference.init_point,
       sandboxInitPoint: preference.sandbox_init_point,
+      sandbox: isSandbox,
     })
-  } catch (error) {
-    console.error('POST /api/checkout error:', error)
-    return NextResponse.json({ error: 'Error al crear preferencia de pago' }, { status: 500 })
+  } catch (error: any) {
+    console.error('POST /api/checkout error:', error?.message ?? error, error?.cause ?? '')
+    return NextResponse.json({
+      error: 'Error al crear preferencia de pago',
+      detail: error?.message ?? String(error),
+    }, { status: 500 })
   }
 }

@@ -107,7 +107,6 @@ export default function NosotrosPage() {
               <li>🐟 Peces: solo envíos en Antioquia (caja icopor)</li>
               <li>🚚 Domicilio Medellín: mensajero mismo día (pedidos antes 3pm)</li>
               <li>💰 Mínimo $60.000 para envíos nacionales</li>
-              <li>❌ NO contra entrega · NO Nequi · NO efectivo por WhatsApp</li>
             </ul>
           </div>
 

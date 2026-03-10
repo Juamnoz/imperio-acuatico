@@ -9,6 +9,7 @@ import { useCartStore } from '@/stores/cart-store'
 import { formatPrice, getFirstImage, parseImages, parsePriceBulk } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import type { ProductWithCategory } from '@/lib/types'
+import { trackAddToCart } from '@/lib/analytics'
 
 const temperamentLabel = {
   pasivo: { label: 'Pacífico', color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
@@ -33,6 +34,7 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
   const temperament = temperamentLabel[product.temperament as keyof typeof temperamentLabel]
 
   const handleAddToCart = () => {
+    trackAddToCart({ id: product.id, name: product.name, price: product.price, category: product.category.name, quantity })
     addItem({
       id: product.id,
       productId: product.id,

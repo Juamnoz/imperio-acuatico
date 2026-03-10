@@ -1,0 +1,88 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const page = parseInt(searchParams.get('page') ?? '1')
+    const limit = parseInt(searchParams.get('limit') ?? '30')
+    const search = searchParams.get('q')
+    const categoryId = searchParams.get('category')
+    const availability = searchParams.get('available')
+
+    const hasImage = searchParams.get('hasImage')
+
+    const where: any = {}
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { alegraId: { contains: search } },
+      ]
+    }
+    if (categoryId) where.categoryId = categoryId
+    if (availability === 'true') where.available = true
+    if (availability === 'false') where.available = false
+    if (hasImage === 'true') {
+      where.images = { not: '[]' }
+    } else if (hasImage === 'false') {
+      where.images = '[]'
+    }
+
+    const [products, total] = await Promise.all([
+      db.product.findMany({
+        where,
+        include: { category: true },
+        orderBy: { name: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      db.product.count({ where }),
+    ])
+
+    return NextResponse.json({
+      products,
+      total,
+      pages: Math.ceil(total / limit),
+      page,
+    })
+  } catch (error) {
+    console.error('Admin products error:', error)
+    return NextResponse.json({ error: 'Error al obtener productos' }, { status: 500 })
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { productId, ...data } = await req.json()
+
+    if (!productId) {
+      return NextResponse.json({ error: 'productId requerido' }, { status: 400 })
+    }
+
+    const allowed: any = {}
+    if (data.price !== undefined) allowed.price = data.price
+    if (data.stock !== undefined) allowed.stock = data.stock
+    if (data.available !== undefined) allowed.available = data.available
+    if (data.featured !== undefined) allowed.featured = data.featured
+    if (data.description !== undefined) allowed.description = data.description
+    if (data.name !== undefined) allowed.name = data.name
+    if (data.images !== undefined) allowed.images = data.images
+    if (data.categoryId !== undefined) allowed.categoryId = data.categoryId
+    if (data.tags !== undefined) allowed.tags = data.tags
+    if (data.temperament !== undefined) allowed.temperament = data.temperament
+    if (data.careLevel !== undefined) allowed.careLevel = data.careLevel
+    if (data.tankMin !== undefined) allowed.tankMin = data.tankMin
+    if (data.priceBulk !== undefined) allowed.priceBulk = data.priceBulk
+
+    const product = await db.product.update({
+      where: { id: productId },
+      data: allowed,
+      include: { category: true },
+    })
+
+    return NextResponse.json(product)
+  } catch (error) {
+    console.error('Admin product update error:', error)
+    return NextResponse.json({ error: 'Error al actualizar producto' }, { status: 500 })
+  }
+}

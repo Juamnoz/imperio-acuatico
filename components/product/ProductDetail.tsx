@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ShoppingCart, Minus, Plus, Droplets, Fish, ArrowLeft, MessageCircle } from 'lucide-react'
@@ -9,6 +9,7 @@ import { useCartStore } from '@/stores/cart-store'
 import { formatPrice, getFirstImage, parseImages, parsePriceBulk } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import type { ProductWithCategory } from '@/lib/types'
+import { trackViewContent, trackAddToCart } from '@/lib/analytics'
 
 const temperamentLabel = {
   pasivo: { label: 'Pacífico', color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
@@ -26,7 +27,12 @@ export function ProductDetail({ product }: { product: ProductWithCategory }) {
   const bulkPrices = parsePriceBulk(product.priceBulk)
   const temperament = temperamentLabel[product.temperament as keyof typeof temperamentLabel]
 
+  useEffect(() => {
+    trackViewContent({ id: product.id, name: product.name, price: product.price, category: product.category.name })
+  }, [product.id, product.name, product.price, product.category.name])
+
   const handleAddToCart = () => {
+    trackAddToCart({ id: product.id, name: product.name, price: product.price, category: product.category.name, quantity })
     addItem({
       id: product.id,
       productId: product.id,

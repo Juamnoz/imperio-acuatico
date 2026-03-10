@@ -1,0 +1,13 @@
+{
+  "name": "Imperio Acuático",
+  "short_name": "Imperio",
+  "description": "Tienda de peces ornamentales y accesorios en Caldas, Antioquia",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1a1d",
+  "theme_color": "#0D7377",
+  "icons": [
+    { "src": "/logo-teal.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/logo-teal.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

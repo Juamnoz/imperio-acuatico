@@ -1,5 +1,6 @@
 export interface Category {
   id: string
+  alegraId: string | null
   name: string
   slug: string
   description: string | null
@@ -11,6 +12,7 @@ export interface Category {
 
 export interface Product {
   id: string
+  alegraId: string | null
   name: string
   slug: string
   description: string | null
@@ -64,6 +66,7 @@ export interface Order {
   mpPreferenceId: string | null
   mpPaymentId: string | null
   mpStatus: string | null
+  alegraInvoiceId: string | null
   shippingMethod: string | null
   trackingNumber: string | null
   notes: string | null

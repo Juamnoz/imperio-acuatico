@@ -8,6 +8,7 @@ import { useCartStore } from '@/stores/cart-store'
 import { formatPrice, getFirstImage } from '@/lib/utils'
 import { SHIPPING_OPTIONS } from '@/lib/types'
 import { Truck, Store, MapPin, Loader2 } from 'lucide-react'
+import { trackInitiateCheckout } from '@/lib/analytics'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -51,6 +52,11 @@ export function CheckoutClient() {
     setError(null)
 
     try {
+      trackInitiateCheckout(
+        total,
+        items.map((i) => ({ id: i.productId, name: i.name, price: i.price, quantity: i.quantity }))
+      )
+
       // 1. Crear orden
       const orderRes = await fetch('/api/orders', {
         method: 'POST',
@@ -77,11 +83,11 @@ export function CheckoutClient() {
       })
 
       if (!mpRes.ok) throw new Error('Error al iniciar el pago')
-      const { initPoint, sandboxInitPoint } = await mpRes.json()
+      const { initPoint, sandboxInitPoint, sandbox } = await mpRes.json()
 
       clearCart()
-      // Redirect a Mercado Pago
-      window.location.href = sandboxInitPoint ?? initPoint
+      // Redirect a Mercado Pago (sandbox o producción según config del admin)
+      window.location.href = sandbox ? (sandboxInitPoint ?? initPoint) : initPoint
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado')
     } finally {

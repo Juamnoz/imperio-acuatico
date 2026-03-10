@@ -1,7 +1,42 @@
+'use client'
+
 import Link from 'next/link'
 import { CheckCircle } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useRef } from 'react'
+import { trackPurchase } from '@/lib/analytics'
 
 export default function CheckoutExito() {
+  const searchParams = useSearchParams()
+  const tracked = useRef(false)
+
+  useEffect(() => {
+    if (tracked.current) return
+    tracked.current = true
+
+    const orderId = searchParams.get('external_reference') ?? searchParams.get('preference_id') ?? ''
+    if (orderId) {
+      // Fetch order data to get accurate total and items
+      fetch(`/api/orders/${orderId}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((order) => {
+          if (order) {
+            trackPurchase({
+              orderId: order.id,
+              total: order.total,
+              items: (order.items ?? []).map((i: { productId: string; name: string; price: number; quantity: number }) => ({
+                id: i.productId,
+                name: i.name,
+                price: i.price,
+                quantity: i.quantity,
+              })),
+            })
+          }
+        })
+        .catch(() => {})
+    }
+  }, [searchParams])
+
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-6">
       <div className="max-w-md text-center space-y-6">

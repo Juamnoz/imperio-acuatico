@@ -9,6 +9,7 @@ import { formatPrice, getFirstImage } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { QuickViewModal } from './QuickViewModal'
 import type { ProductWithCategory } from '@/lib/types'
+import { trackAddToCart } from '@/lib/analytics'
 
 const temperamentColors = {
   pasivo: 'text-emerald-400 bg-emerald-400/10',
@@ -35,6 +36,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    trackAddToCart({ id: product.id, name: product.name, price: product.price, category: product.category.name })
     addItem({
       id: product.id,
       productId: product.id,
