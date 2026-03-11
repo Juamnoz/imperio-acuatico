@@ -19,13 +19,13 @@ const schema = z.object({
   customerCity: z.string().min(2, 'Ciudad requerida'),
   customerAddress: z.string().min(5, 'Dirección requerida'),
   customerId: z.string().optional(),
-  shippingMethod: z.enum(['tienda', 'domicilio', 'interrapidisimo']),
+  shippingMethod: z.enum(['tienda', 'domicilio', 'nacional']),
   notes: z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
 
-const shippingIcons = { tienda: Store, domicilio: MapPin, interrapidisimo: Truck }
+const shippingIcons = { tienda: Store, domicilio: MapPin, nacional: Truck }
 
 export function CheckoutClient() {
   const { items, getSubtotal, clearCart } = useCartStore()

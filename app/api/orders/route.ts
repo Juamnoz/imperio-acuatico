@@ -10,7 +10,7 @@ const orderSchema = z.object({
   customerCity: z.string().min(2),
   customerAddress: z.string().min(5),
   customerId: z.string().optional(),
-  shippingMethod: z.enum(['tienda', 'domicilio', 'interrapidisimo']),
+  shippingMethod: z.enum(['tienda', 'domicilio', 'nacional']),
   notes: z.string().optional(),
   idempotencyKey: z.string().optional(),
   items: z.array(
@@ -34,7 +34,12 @@ export async function POST(req: NextRequest) {
     const data = orderSchema.parse(body)
 
     const subtotal = data.items.reduce((acc, i) => acc + i.price * i.quantity, 0)
-    const shipping = data.shippingMethod === 'interrapidisimo' ? 11000 : 0
+    const shippingPrices: Record<string, number> = {
+      tienda: 0,
+      domicilio: 20000,
+      nacional: 20000,
+    }
+    const shipping = shippingPrices[data.shippingMethod] ?? 0
     const total = subtotal + shipping
 
     // Idempotencia: buscar orden PENDING reciente con el mismo key
