@@ -1,41 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readFile, writeFile } from 'fs/promises'
-import path from 'path'
+import { db } from '@/lib/db'
 
-const envPath = path.join(process.cwd(), '.env.local')
-
-async function readEnv(): Promise<Map<string, string>> {
-  const content = await readFile(envPath, 'utf-8')
-  const map = new Map<string, string>()
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
-    const eqIndex = trimmed.indexOf('=')
-    if (eqIndex === -1) continue
-    map.set(trimmed.slice(0, eqIndex), trimmed.slice(eqIndex + 1))
-  }
-  return map
+async function getSetting(key: string): Promise<string | null> {
+  const row = await db.siteSettings.findUnique({ where: { key } })
+  return row?.value ?? null
 }
 
-async function writeEnv(map: Map<string, string>) {
-  const content = await readFile(envPath, 'utf-8')
-  let result = content
-  for (const [key, value] of map) {
-    const regex = new RegExp(`^${key}=.*$`, 'm')
-    if (regex.test(result)) {
-      result = result.replace(regex, `${key}=${value}`)
-    }
-  }
-  await writeFile(envPath, result, 'utf-8')
+async function setSetting(key: string, value: string) {
+  await db.siteSettings.upsert({
+    where: { key },
+    update: { value },
+    create: { key, value },
+  })
 }
 
 export async function GET() {
   try {
-    const env = await readEnv()
+    const sandbox = await getSetting('mp_sandbox')
     return NextResponse.json({
-      mpSandbox: env.get('NEXT_PUBLIC_MP_SANDBOX') === 'true',
+      // Si no hay valor en DB, usar el env var como fallback
+      mpSandbox: sandbox !== null ? sandbox === 'true' : process.env.NEXT_PUBLIC_MP_SANDBOX === 'true',
     })
   } catch (error) {
+    console.error('Settings GET error:', error)
     return NextResponse.json({ error: 'Error reading settings' }, { status: 500 })
   }
 }
@@ -45,9 +32,7 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json()
 
     if (body.mpSandbox !== undefined) {
-      const env = await readEnv()
-      env.set('NEXT_PUBLIC_MP_SANDBOX', body.mpSandbox ? 'true' : 'false')
-      await writeEnv(env)
+      await setSetting('mp_sandbox', body.mpSandbox ? 'true' : 'false')
 
       return NextResponse.json({
         mpSandbox: body.mpSandbox,
