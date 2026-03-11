@@ -19,6 +19,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
     }
 
+    // Idempotencia: si la orden ya tiene preferencia MP, no crear otra
+    if (order.mpPreferenceId) {
+      const isSandbox = process.env.NEXT_PUBLIC_MP_SANDBOX === 'true'
+      // Re-crear preferencia porque las anteriores pueden expirar,
+      // pero reutilizar la misma orden
+      const cartItems: CartItem[] = order.items.map((item) => ({
+        id: item.id,
+        productId: item.productId,
+        name: item.name,
+        price: item.price,
+        image: '',
+        slug: '',
+        quantity: item.quantity,
+      }))
+
+      const preference = await createPreference(order.id, cartItems, order.shipping)
+
+      await db.order.update({
+        where: { id: order.id },
+        data: { mpPreferenceId: preference.id },
+      })
+
+      return NextResponse.json({
+        preferenceId: preference.id,
+        initPoint: preference.init_point,
+        sandboxInitPoint: preference.sandbox_init_point,
+        sandbox: isSandbox,
+      })
+    }
+
     const cartItems: CartItem[] = order.items.map((item) => ({
       id: item.id,
       productId: item.productId,
@@ -36,15 +66,7 @@ export async function POST(req: NextRequest) {
       data: { mpPreferenceId: preference.id },
     })
 
-    // Read sandbox mode from env file dynamically
-    let isSandbox = process.env.NEXT_PUBLIC_MP_SANDBOX === 'true'
-    try {
-      const { readFile } = await import('fs/promises')
-      const { join } = await import('path')
-      const envContent = await readFile(join(process.cwd(), '.env.local'), 'utf-8')
-      const match = envContent.match(/^NEXT_PUBLIC_MP_SANDBOX=(.*)$/m)
-      if (match) isSandbox = match[1].trim() === 'true'
-    } catch {}
+    const isSandbox = process.env.NEXT_PUBLIC_MP_SANDBOX === 'true'
 
     return NextResponse.json({
       preferenceId: preference.id,

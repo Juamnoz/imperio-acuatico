@@ -57,7 +57,7 @@ export function CheckoutClient() {
         items.map((i) => ({ id: i.productId, name: i.name, price: i.price, quantity: i.quantity }))
       )
 
-      // 1. Crear orden
+      // 1. Crear orden (idempotente — si ya existe una PENDING con mismos items, la reutiliza)
       const orderRes = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,17 +72,41 @@ export function CheckoutClient() {
         }),
       })
 
-      if (!orderRes.ok) throw new Error('Error al crear la orden')
+      if (!orderRes.ok) {
+        const errData = await orderRes.json().catch(() => null)
+        throw new Error(errData?.detail || errData?.error || 'Error al crear la orden')
+      }
       const order = await orderRes.json()
 
-      // 2. Crear preferencia Mercado Pago
+      // 2. Si la orden ya tiene preferencia MP, reutilizarla (idempotencia)
+      if (order.mpPreferenceId) {
+        clearCart()
+        // Redirigir con la preferencia existente
+        const mpRes = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: order.id }),
+        })
+        if (!mpRes.ok) {
+          const errData = await mpRes.json().catch(() => null)
+          throw new Error(errData?.detail || errData?.error || 'Error al iniciar el pago')
+        }
+        const { initPoint, sandboxInitPoint, sandbox } = await mpRes.json()
+        window.location.href = sandbox ? (sandboxInitPoint ?? initPoint) : initPoint
+        return
+      }
+
+      // 3. Crear preferencia Mercado Pago
       const mpRes = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId: order.id }),
       })
 
-      if (!mpRes.ok) throw new Error('Error al iniciar el pago')
+      if (!mpRes.ok) {
+        const errData = await mpRes.json().catch(() => null)
+        throw new Error(errData?.detail || errData?.error || 'Error al iniciar el pago')
+      }
       const { initPoint, sandboxInitPoint, sandbox } = await mpRes.json()
 
       clearCart()

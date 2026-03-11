@@ -59,6 +59,7 @@ model Order {
   shipping        Int         @default(0)
   total           Int
   status          String      @default("PENDING")
+  idempotencyKey  String?
   mpPreferenceId  String?
   mpPaymentId     String?
   mpStatus        String?
