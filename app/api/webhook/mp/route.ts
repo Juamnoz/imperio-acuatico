@@ -7,7 +7,7 @@ async function createAlegraInvoice(orderId: string) {
   try {
     const order = await db.order.findUnique({
       where: { id: orderId },
-      include: { items: { include: { product: true } } },
+      include: { items: true },
     })
 
     if (!order || order.alegraInvoiceId) return
@@ -20,10 +20,18 @@ async function createAlegraInvoice(orderId: string) {
       city: order.customerCity,
     })
 
+    // Buscar alegraId de cada producto
+    const productIds = order.items.map((i) => i.productId)
+    const products = await db.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, alegraId: true },
+    })
+    const alegraMap = new Map(products.map((p) => [p.id, p.alegraId]))
+
     const invoiceItems = order.items
-      .filter((item) => item.product.alegraId)
+      .filter((item) => alegraMap.get(item.productId))
       .map((item) => ({
-        alegraItemId: item.product.alegraId!,
+        alegraItemId: alegraMap.get(item.productId)!,
         name: item.name,
         price: item.price,
         quantity: item.quantity,

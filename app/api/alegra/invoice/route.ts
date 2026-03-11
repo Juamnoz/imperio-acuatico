@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
     const order = await db.order.findUnique({
       where: { id: orderId },
-      include: { items: { include: { product: true } } },
+      include: { items: true },
     })
 
     if (!order) {
@@ -35,9 +35,17 @@ export async function POST(req: NextRequest) {
       city: order.customerCity,
     })
 
+    // Buscar alegraId de cada producto referenciado en los items
+    const productIds = order.items.map((i) => i.productId)
+    const products = await db.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, alegraId: true },
+    })
+    const alegraMap = new Map(products.map((p) => [p.id, p.alegraId]))
+
     // Preparar items para la factura
     const invoiceItems = order.items.map((item) => ({
-      alegraItemId: item.product.alegraId!,
+      alegraItemId: alegraMap.get(item.productId) ?? null,
       name: item.name,
       price: item.price,
       quantity: item.quantity,
@@ -58,7 +66,7 @@ export async function POST(req: NextRequest) {
     // Crear factura en Alegra
     const invoice = await createInvoice({
       contactId: contact.id,
-      items: invoiceItems,
+      items: invoiceItems as { alegraItemId: string; name: string; price: number; quantity: number }[],
       observations: `Pedido web #${order.id}${order.notes ? ` — ${order.notes}` : ''}`,
     })
 

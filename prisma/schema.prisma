@@ -43,7 +43,6 @@ model Product {
   tags        String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  orderItems  OrderItem[]
 }
 
 model Order {
@@ -76,7 +75,6 @@ model OrderItem {
   orderId   String
   order     Order   @relation(fields: [orderId], references: [id])
   productId String
-  product   Product @relation(fields: [productId], references: [id])
   name      String
   price     Int
   quantity  Int
