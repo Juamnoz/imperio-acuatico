@@ -21,15 +21,24 @@ export async function GET(req: NextRequest) {
   })
 
   return NextResponse.json(
-    products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      price: p.price,
-      stock: p.stock,
-      available: p.available,
-      categorySlug: p.category?.slug ?? null,
-    }))
+    products.map((p) => {
+      let imageUrl: string | null = null
+      try {
+        const imgs = JSON.parse(p.images || '[]')
+        imageUrl = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null
+      } catch {}
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        price: p.price,
+        stock: p.stock,
+        available: p.available,
+        description: p.description ?? null,
+        imageUrl,
+        categorySlug: p.category?.slug ?? null,
+      }
+    })
   )
 }
 
@@ -40,7 +49,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { externalId, price, stock, isActive, name } = body
+  const { externalId, price, stock, isActive, name, description, imageUrl } = body
 
   if (!externalId) {
     return NextResponse.json({ error: 'externalId requerido' }, { status: 400 })

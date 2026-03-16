@@ -1,6 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
+const LISA_API = process.env.LISA_API_URL || ''
+const LISA_AGENT_ID = process.env.LISA_AGENT_ID || ''
+
+async function notifyLisaProduct(product: any) {
+  const syncKeyRow = await db.siteSettings.findUnique({ where: { key: 'lisa_sync_key' } })
+  const syncKey = syncKeyRow?.value || ''
+  if (!LISA_API || !LISA_AGENT_ID || !syncKey) return
+
+  let imageUrl: string | null = null
+  try {
+    const imgs = JSON.parse(product.images || '[]')
+    imageUrl = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null
+  } catch {}
+
+  await fetch(`${LISA_API}/webhooks/store/product-update`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-lisa-sync-key': syncKey },
+    body: JSON.stringify({
+      agentId: LISA_AGENT_ID,
+      externalId: product.id,
+      name: product.name,
+      price: product.price,
+      stock: product.stock,
+      isActive: product.available,
+      description: product.description ?? null,
+      imageUrl,
+    }),
+  })
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
@@ -79,6 +109,9 @@ export async function PATCH(req: NextRequest) {
       data: allowed,
       include: { category: true },
     })
+
+    // Notify LISA fire-and-forget
+    notifyLisaProduct(product).catch(() => {})
 
     return NextResponse.json(product)
   } catch (error) {
