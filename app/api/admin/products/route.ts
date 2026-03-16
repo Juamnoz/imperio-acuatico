@@ -5,9 +5,16 @@ const LISA_API = process.env.LISA_API_URL || ''
 const LISA_AGENT_ID = process.env.LISA_AGENT_ID || ''
 
 async function notifyLisaProduct(product: any) {
-  const syncKeyRow = await db.siteSettings.findUnique({ where: { key: 'lisa_sync_key' } })
+  const [syncKeyRow, apiUrlRow, agentIdRow] = await Promise.all([
+    db.siteSettings.findUnique({ where: { key: 'lisa_sync_key' } }),
+    db.siteSettings.findUnique({ where: { key: 'lisa_api_url' } }),
+    db.siteSettings.findUnique({ where: { key: 'lisa_agent_id' } }),
+  ])
   const syncKey = syncKeyRow?.value || ''
-  if (!LISA_API || !LISA_AGENT_ID || !syncKey) return
+  const rawApiUrl = apiUrlRow?.value || LISA_API || ''
+  const apiUrl = rawApiUrl.replace(/\/v1\/?$/, '')
+  const agentId = agentIdRow?.value || LISA_AGENT_ID || ''
+  if (!apiUrl || !agentId || !syncKey) return
 
   let imageUrl: string | null = null
   try {
@@ -15,11 +22,11 @@ async function notifyLisaProduct(product: any) {
     imageUrl = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null
   } catch {}
 
-  await fetch(`${LISA_API}/webhooks/store/product-update`, {
+  await fetch(`${apiUrl}/v1/webhooks/store/${agentId}/sync/product`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-lisa-sync-key': syncKey },
     body: JSON.stringify({
-      agentId: LISA_AGENT_ID,
+      agentId,
       externalId: product.id,
       name: product.name,
       price: product.price,

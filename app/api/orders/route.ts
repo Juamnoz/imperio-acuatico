@@ -8,9 +8,10 @@ async function getLisaConfig() {
     where: { key: { in: ['lisa_sync_key', 'lisa_api_url', 'lisa_agent_id'] } },
   })
   const map = Object.fromEntries(rows.map((r) => [r.key, r.value]))
+  const rawApiUrl = map['lisa_api_url'] || process.env.LISA_API_URL || 'http://localhost:3001'
   return {
     syncKey: map['lisa_sync_key'] || process.env.LISA_SYNC_KEY || '',
-    apiUrl: map['lisa_api_url'] || process.env.LISA_API_URL || 'http://localhost:3001',
+    apiUrl: rawApiUrl.replace(/\/v1\/?$/, ''),
     agentId: map['lisa_agent_id'] || process.env.LISA_AGENT_ID || '',
   }
 }
