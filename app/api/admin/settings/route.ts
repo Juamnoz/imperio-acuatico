@@ -16,10 +16,17 @@ async function setSetting(key: string, value: string) {
 
 export async function GET() {
   try {
-    const sandbox = await getSetting('mp_sandbox')
+    const [sandbox, lisaSyncKey, lisaApiUrl, lisaAgentId] = await Promise.all([
+      getSetting('mp_sandbox'),
+      getSetting('lisa_sync_key'),
+      getSetting('lisa_api_url'),
+      getSetting('lisa_agent_id'),
+    ])
     return NextResponse.json({
-      // Si no hay valor en DB, usar el env var como fallback
       mpSandbox: sandbox !== null ? sandbox === 'true' : process.env.NEXT_PUBLIC_MP_SANDBOX === 'true',
+      lisaSyncKey: lisaSyncKey ?? '',
+      lisaApiUrl: lisaApiUrl ?? process.env.LISA_API_URL ?? '',
+      lisaAgentId: lisaAgentId ?? process.env.LISA_AGENT_ID ?? '',
     })
   } catch (error) {
     console.error('Settings GET error:', error)
@@ -33,13 +40,19 @@ export async function PATCH(req: NextRequest) {
 
     if (body.mpSandbox !== undefined) {
       await setSetting('mp_sandbox', body.mpSandbox ? 'true' : 'false')
-
       return NextResponse.json({
         mpSandbox: body.mpSandbox,
         message: body.mpSandbox
           ? 'Modo sandbox activado — los pagos son de prueba'
           : 'Modo producción activado — los pagos son reales',
       })
+    }
+
+    if (body.lisaSyncKey !== undefined || body.lisaApiUrl !== undefined || body.lisaAgentId !== undefined) {
+      if (body.lisaSyncKey !== undefined) await setSetting('lisa_sync_key', body.lisaSyncKey)
+      if (body.lisaApiUrl !== undefined) await setSetting('lisa_api_url', body.lisaApiUrl)
+      if (body.lisaAgentId !== undefined) await setSetting('lisa_agent_id', body.lisaAgentId)
+      return NextResponse.json({ ok: true, message: 'Configuración de LISA guardada' })
     }
 
     return NextResponse.json({ error: 'No settings to update' }, { status: 400 })

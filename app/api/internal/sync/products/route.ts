@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-const SYNC_KEY = process.env.LISA_SYNC_KEY ?? ''
-
-function authorized(req: NextRequest) {
-  return req.headers.get('x-lisa-sync-key') === SYNC_KEY && SYNC_KEY !== ''
+async function authorized(req: NextRequest) {
+  const header = req.headers.get('x-lisa-sync-key')
+  if (!header) return false
+  const row = await db.siteSettings.findUnique({ where: { key: 'lisa_sync_key' } })
+  const key = row?.value || process.env.LISA_SYNC_KEY || ''
+  return key !== '' && header === key
 }
 
 // GET — LISA descarga el catálogo completo para reconciliación
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) {
+  if (!await authorized(req)) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
@@ -33,7 +35,7 @@ export async function GET(req: NextRequest) {
 
 // POST — LISA notifica cambio de producto (precio, stock, estado)
 export async function POST(req: NextRequest) {
-  if (!authorized(req)) {
+  if (!await authorized(req)) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import {
   RefreshCw, CheckCircle, XCircle, Loader2,
-  CreditCard, FileText, Database,
+  CreditCard, FileText, Database, MessageCircle, Save,
   ArrowRight, Shield, AlertTriangle,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -84,10 +84,22 @@ export default function IntegracionesPage() {
   const [switchingMode, setSwitchingMode] = useState(false)
   const [modeMessage, setModeMessage] = useState<string | null>(null)
 
+  // LISA state
+  const [lisaSyncKey, setLisaSyncKey] = useState('')
+  const [lisaApiUrl, setLisaApiUrl] = useState('')
+  const [lisaAgentId, setLisaAgentId] = useState('')
+  const [savingLisa, setSavingLisa] = useState(false)
+  const [lisaMessage, setLisaMessage] = useState<string | null>(null)
+
   useEffect(() => {
     fetch('/api/admin/settings')
       .then((r) => r.json())
-      .then((d) => setMpSandbox(d.mpSandbox ?? true))
+      .then((d) => {
+        setMpSandbox(d.mpSandbox ?? true)
+        setLisaSyncKey(d.lisaSyncKey ?? '')
+        setLisaApiUrl(d.lisaApiUrl ?? '')
+        setLisaAgentId(d.lisaAgentId ?? '')
+      })
       .catch(() => {})
   }, [])
 
@@ -107,6 +119,23 @@ export default function IntegracionesPage() {
       setModeMessage('Error al cambiar el modo')
     }
     setSwitchingMode(false)
+  }
+
+  async function saveLisaSettings() {
+    setSavingLisa(true)
+    setLisaMessage(null)
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lisaSyncKey, lisaApiUrl, lisaAgentId }),
+      })
+      const data = await res.json()
+      setLisaMessage(data.message ?? 'Guardado')
+    } catch {
+      setLisaMessage('Error al guardar')
+    }
+    setSavingLisa(false)
   }
 
   async function handleSync() {
@@ -152,6 +181,95 @@ export default function IntegracionesPage() {
             Alegra crea factura
           </span>
         </div>
+      </div>
+
+      {/* LISA Card */}
+      <div className="overflow-hidden rounded-xl border border-primary/10 bg-card">
+        <div className="flex items-center gap-4 p-5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/15">
+            <MessageCircle className="h-6 w-6 text-orange-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-display text-base font-semibold">LISA</h3>
+              <div className={`flex items-center gap-1 ${lisaSyncKey ? 'text-emerald-400' : 'text-muted-foreground'}`}>
+                {lisaSyncKey ? <CheckCircle className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                <span className="text-xs font-medium">{lisaSyncKey ? 'Conectado' : 'Sin configurar'}</span>
+              </div>
+            </div>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Agente de WhatsApp — Sincronización de pedidos y catálogo en tiempo real
+            </p>
+          </div>
+          <button
+            onClick={() => setShowFields((prev) => ({ ...prev, lisa: !prev.lisa }))}
+            className="shrink-0 rounded-lg border border-primary/10 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            {showFields.lisa ? 'Ocultar' : 'Configurar'}
+          </button>
+        </div>
+
+        {showFields.lisa && (
+          <div className="border-t border-primary/10 bg-muted/10 p-5 space-y-4">
+            <div>
+              <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <Shield className="h-3 w-3" />
+                Clave de sincronización
+                <span className="text-[10px] text-primary/50">Generada desde LISA → Tienda → Generar clave</span>
+              </label>
+              <Input
+                type="password"
+                placeholder="Pega aquí la clave generada en LISA"
+                value={lisaSyncKey}
+                onChange={(e) => setLisaSyncKey(e.target.value)}
+                className="bg-card border-primary/10 font-mono text-xs"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <Shield className="h-3 w-3" />
+                URL de la API de LISA
+              </label>
+              <Input
+                type="text"
+                placeholder="https://api.lisa.tudominio.com"
+                value={lisaApiUrl}
+                onChange={(e) => setLisaApiUrl(e.target.value)}
+                className="bg-card border-primary/10 font-mono text-xs"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <Shield className="h-3 w-3" />
+                Agent ID
+              </label>
+              <Input
+                type="text"
+                placeholder="UUID del agente en LISA"
+                value={lisaAgentId}
+                onChange={(e) => setLisaAgentId(e.target.value)}
+                className="bg-card border-primary/10 font-mono text-xs"
+              />
+            </div>
+
+            {lisaMessage && (
+              <div className={`rounded-lg p-3 text-xs font-medium ${
+                lisaMessage.includes('Error') ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
+              }`}>
+                {lisaMessage}
+              </div>
+            )}
+
+            <button
+              onClick={saveLisaSettings}
+              disabled={savingLisa}
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              {savingLisa ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {savingLisa ? 'Guardando...' : 'Guardar configuración'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Integration Cards */}

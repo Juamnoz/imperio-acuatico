@@ -3,15 +3,24 @@ import { db } from '@/lib/db'
 import { z } from 'zod'
 import { createHash } from 'crypto'
 
-const LISA_API = process.env.LISA_API_URL ?? 'http://localhost:3001'
-const LISA_AGENT_ID = process.env.LISA_AGENT_ID ?? ''
-const LISA_SYNC_KEY = process.env.LISA_SYNC_KEY ?? ''
+async function getLisaConfig() {
+  const rows = await db.siteSettings.findMany({
+    where: { key: { in: ['lisa_sync_key', 'lisa_api_url', 'lisa_agent_id'] } },
+  })
+  const map = Object.fromEntries(rows.map((r) => [r.key, r.value]))
+  return {
+    syncKey: map['lisa_sync_key'] || process.env.LISA_SYNC_KEY || '',
+    apiUrl: map['lisa_api_url'] || process.env.LISA_API_URL || 'http://localhost:3001',
+    agentId: map['lisa_agent_id'] || process.env.LISA_AGENT_ID || '',
+  }
+}
 
 async function notifyLisa(order: any) {
-  if (!LISA_AGENT_ID || !LISA_SYNC_KEY) return
-  await fetch(`${LISA_API}/v1/webhooks/store/${LISA_AGENT_ID}/orders`, {
+  const { syncKey, apiUrl, agentId } = await getLisaConfig()
+  if (!agentId || !syncKey) return
+  await fetch(`${apiUrl}/v1/webhooks/store/${agentId}/orders`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-lisa-sync-key': LISA_SYNC_KEY },
+    headers: { 'Content-Type': 'application/json', 'x-lisa-sync-key': syncKey },
     body: JSON.stringify({
       externalId: order.id,
       clientName: order.customerName,
