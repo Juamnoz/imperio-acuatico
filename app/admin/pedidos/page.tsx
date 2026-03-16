@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   Search, ChevronLeft, ChevronRight, Package,
   Mail, Phone, MapPin, Truck, FileText,
-  Clock, CheckCircle, XCircle, Loader2,
+  Loader2, Globe, MessageCircle,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -33,6 +33,21 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secon
 
 function formatCOP(n: number) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(n)
+}
+
+function ChannelBadge({ source }: { source?: string }) {
+  if (source === 'whatsapp') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+        <MessageCircle className="h-3 w-3" /> WhatsApp
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-400">
+      <Globe className="h-3 w-3" /> Web
+    </span>
+  )
 }
 
 export default function PedidosPage() {
@@ -130,6 +145,7 @@ export default function PedidosPage() {
                 <thead>
                   <tr className="border-b border-primary/10 text-left">
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cliente</th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Canal</th>
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Items</th>
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total</th>
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Estado</th>
@@ -149,6 +165,9 @@ export default function PedidosPage() {
                         <td className="px-5 py-3">
                           <p className="text-sm font-medium">{order.customerName}</p>
                           <p className="text-xs text-muted-foreground">{order.customerEmail}</p>
+                        </td>
+                        <td className="px-5 py-3">
+                          <ChannelBadge source={order.source} />
                         </td>
                         <td className="px-5 py-3 text-sm text-muted-foreground">{order.items.length}</td>
                         <td className="px-5 py-3 text-sm font-semibold">{formatCOP(order.total)}</td>
@@ -186,7 +205,10 @@ export default function PedidosPage() {
                   >
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium">{order.customerName}</p>
-                      <Badge variant={sc.variant} className="text-[10px]">{sc.label}</Badge>
+                      <div className="flex items-center gap-2">
+                        <ChannelBadge source={order.source} />
+                        <Badge variant={sc.variant} className="text-[10px]">{sc.label}</Badge>
+                      </div>
                     </div>
                     <div className="mt-1 flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">

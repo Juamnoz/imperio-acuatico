@@ -3,6 +3,32 @@ import { db } from '@/lib/db'
 import { z } from 'zod'
 import { createHash } from 'crypto'
 
+const LISA_API = process.env.LISA_API_URL ?? 'http://localhost:3001'
+const LISA_AGENT_ID = process.env.LISA_AGENT_ID ?? ''
+const LISA_SYNC_KEY = process.env.LISA_SYNC_KEY ?? ''
+
+async function notifyLisa(order: any) {
+  if (!LISA_AGENT_ID || !LISA_SYNC_KEY) return
+  await fetch(`${LISA_API}/v1/webhooks/store/${LISA_AGENT_ID}/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-lisa-sync-key': LISA_SYNC_KEY },
+    body: JSON.stringify({
+      externalId: order.id,
+      clientName: order.customerName,
+      clientPhone: order.customerPhone,
+      clientEmail: order.customerEmail,
+      clientCity: order.customerCity,
+      clientAddress: order.customerAddress,
+      items: order.items.map((i: any) => ({ name: i.name, price: i.price, quantity: i.quantity, productId: i.productId })),
+      subtotal: order.subtotal,
+      shipping: order.shipping,
+      total: order.total,
+      status: order.status.toLowerCase(),
+      notes: order.notes,
+    }),
+  })
+}
+
 const orderSchema = z.object({
   customerName: z.string().min(2),
   customerEmail: z.string().email(),
@@ -75,6 +101,7 @@ export async function POST(req: NextRequest) {
         total,
         status: 'PENDING',
         idempotencyKey,
+        source: 'web',
         items: {
           create: data.items.map((item) => ({
             productId: item.productId,
@@ -86,6 +113,9 @@ export async function POST(req: NextRequest) {
       },
       include: { items: true },
     })
+
+    // Notificar a LISA (fire-and-forget)
+    notifyLisa(order).catch(() => {})
 
     return NextResponse.json(order, { status: 201 })
   } catch (error: any) {
