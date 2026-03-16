@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { findOrCreateContact, createInvoice } from '@/lib/alegra'
 import { sendOrderConfirmation } from '@/lib/email'
+import { notifyLisaPayment } from '@/lib/lisa'
 
 async function createAlegraInvoice(orderId: string) {
   try {
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
             in_process: 'PENDING',
           }
 
-          await db.order.update({
+          const updatedOrder = await db.order.update({
             where: { id: orderId },
             data: {
               mpPaymentId: String(data.id),
@@ -89,6 +90,9 @@ export async function POST(req: NextRequest) {
               status: statusMap[payment.status] ?? 'PENDING',
             },
           })
+
+          // Notificar a LISA del nuevo estado de pago (fire-and-forget awaited)
+          await notifyLisaPayment(updatedOrder).catch(() => {})
 
           // Cuando el pago es aprobado: emails + factura Alegra
           if (payment.status === 'approved') {
