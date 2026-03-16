@@ -124,8 +124,8 @@ export async function POST(req: NextRequest) {
       include: { items: true },
     })
 
-    // Notificar a LISA (fire-and-forget)
-    notifyLisa(order).catch(() => {})
+    // Notificar a LISA (awaited so Vercel doesn't kill the lambda before the fetch completes)
+    await notifyLisa(order).catch(() => {})
 
     return NextResponse.json(order, { status: 201 })
   } catch (error: any) {

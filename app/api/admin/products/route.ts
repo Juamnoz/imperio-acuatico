@@ -117,8 +117,8 @@ export async function PATCH(req: NextRequest) {
       include: { category: true },
     })
 
-    // Notify LISA fire-and-forget
-    notifyLisaProduct(product).catch(() => {})
+    // Notify LISA (awaited so Vercel doesn't kill the lambda before the fetch completes)
+    await notifyLisaProduct(product).catch(() => {})
 
     return NextResponse.json(product)
   } catch (error) {
