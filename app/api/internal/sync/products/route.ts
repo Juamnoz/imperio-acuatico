@@ -27,6 +27,10 @@ export async function GET(req: NextRequest) {
         const imgs = JSON.parse(p.images || '[]')
         imageUrl = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null
       } catch {}
+      if (imageUrl && !imageUrl.startsWith('http')) {
+        const siteUrl = process.env.NEXT_PUBLIC_URL || ''
+        imageUrl = siteUrl ? `${siteUrl}${imageUrl}` : null
+      }
       return {
         id: p.id,
         name: p.name,

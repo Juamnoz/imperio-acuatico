@@ -57,15 +57,16 @@ const INTEGRATIONS: Integration[] = [
     ],
   },
   {
-    id: 'neon',
-    name: 'Neon PostgreSQL',
-    description: 'Base de datos — PostgreSQL serverless en la nube',
+    id: 'supabase',
+    name: 'Supabase',
+    description: 'Base de datos y almacenamiento — PostgreSQL + Storage autoalojado',
     icon: Database,
-    color: 'text-violet-400',
-    bgColor: 'bg-violet-500/15',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/15',
     status: 'connected',
     fields: [
-      { key: 'DATABASE_URL', label: 'Connection String', type: 'password', value: '••••••••••••••••••••' },
+      { key: 'SUPABASE_URL', label: 'URL del proyecto', type: 'text', value: process.env.SUPABASE_URL || '' },
+      { key: 'SUPABASE_SERVICE_KEY', label: 'Service Key', type: 'password', value: '••••••••••••••••••••' },
     ],
   },
 ]

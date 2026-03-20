@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
+import { supabase, STORAGE_BUCKET, getProductsPath, getPublicUrl } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,26 +10,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No se enviaron archivos' }, { status: 400 })
     }
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'products')
-    await mkdir(uploadDir, { recursive: true })
-
     const urls: string[] = []
 
     for (const file of files) {
       const buffer = Buffer.from(await file.arrayBuffer())
-      const ext = path.extname(file.name) || '.jpg'
+      const ext = (file.name.match(/\.\w+$/) || ['.jpg'])[0]
       const safeName = file.name
-        .replace(ext, '')
+        .replace(/\.\w+$/, '')
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '')
       const filename = `${safeName}-${Date.now()}${ext}`
-      const filepath = path.join(uploadDir, filename)
+      const storagePath = `${getProductsPath()}/${filename}`
 
-      await writeFile(filepath, buffer)
-      urls.push(`/uploads/products/${filename}`)
+      const { error } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(storagePath, buffer, {
+          contentType: file.type || 'image/jpeg',
+          upsert: false,
+        })
+
+      if (error) {
+        console.error('Supabase upload error:', error)
+        return NextResponse.json({ error: `Error al subir ${file.name}: ${error.message}` }, { status: 500 })
+      }
+
+      urls.push(getPublicUrl(storagePath))
     }
 
     return NextResponse.json({ urls })
