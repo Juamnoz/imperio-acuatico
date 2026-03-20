@@ -65,7 +65,7 @@ const INTEGRATIONS: Integration[] = [
     bgColor: 'bg-emerald-500/15',
     status: 'connected',
     fields: [
-      { key: 'SUPABASE_URL', label: 'URL del proyecto', type: 'text', value: process.env.SUPABASE_URL || '' },
+      { key: 'SUPABASE_URL', label: 'URL del proyecto', type: 'text', value: 'https://devsupabase.automatesolutions.tech' },
       { key: 'SUPABASE_SERVICE_KEY', label: 'Service Key', type: 'password', value: '••••••••••••••••••••' },
     ],
   },
