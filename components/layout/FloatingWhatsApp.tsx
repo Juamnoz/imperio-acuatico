@@ -1,22 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCartStore } from '@/stores/cart-store'
 
 export function FloatingWhatsApp() {
   const [showTooltip, setShowTooltip] = useState(true)
+  const [searchOpen, setSearchOpen] = useState(false)
   const isCartOpen = useCartStore((s) => s.isOpen)
+
+  useEffect(() => {
+    const onOpen = () => setSearchOpen(true)
+    const onClose = () => setSearchOpen(false)
+    document.addEventListener('search-opened', onOpen)
+    document.addEventListener('search-closed', onClose)
+    return () => {
+      document.removeEventListener('search-opened', onOpen)
+      document.removeEventListener('search-closed', onClose)
+    }
+  }, [])
+
+  const shouldHide = isCartOpen || searchOpen
 
   return (
     <motion.div
       className="fixed bottom-20 right-4 z-50 md:bottom-6 md:right-6 flex items-end gap-2"
-      animate={{ x: isCartOpen ? 200 : 0 }}
+      animate={{ x: shouldHide ? 200 : 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
       <AnimatePresence>
-        {showTooltip && !isCartOpen && (
+        {showTooltip && !shouldHide && (
           <motion.div
             initial={{ opacity: 0, x: 10, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}

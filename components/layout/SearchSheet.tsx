@@ -18,13 +18,15 @@ export function SearchSheet() {
   const inputRef = useRef<HTMLInputElement>(null)
   const { addItem } = useCartStore()
 
-  // Lock body scroll
+  // Lock body scroll + notify WhatsApp button
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
+      document.dispatchEvent(new Event('search-opened'))
       setTimeout(() => inputRef.current?.focus(), 100)
     } else {
       document.body.style.overflow = ''
+      document.dispatchEvent(new Event('search-closed'))
     }
     return () => { document.body.style.overflow = '' }
   }, [open])
