@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { findOrCreateContact, createInvoice } from '@/lib/alegra'
 import { sendOrderConfirmation } from '@/lib/email'
 import { notifyLisaPayment } from '@/lib/lisa'
+import { getMpAccessToken } from '@/lib/mercadopago'
 
 async function createAlegraInvoice(orderId: string) {
   try {
@@ -63,10 +64,11 @@ export async function POST(req: NextRequest) {
     const { type, data } = body
 
     if (type === 'payment' && data?.id) {
+      const accessToken = await getMpAccessToken()
       const baseUrl = 'https://api.mercadopago.com'
       const response = await fetch(`${baseUrl}/v1/payments/${data.id}`, {
         headers: {
-          Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       })
 

@@ -16,14 +16,20 @@ async function setSetting(key: string, value: string) {
 
 export async function GET() {
   try {
-    const [sandbox, lisaSyncKey, lisaApiUrl, lisaAgentId] = await Promise.all([
+    const [sandbox, lisaSyncKey, lisaApiUrl, lisaAgentId, mpPublicKey, mpAccessToken, mpClientId] = await Promise.all([
       getSetting('mp_sandbox'),
       getSetting('lisa_sync_key'),
       getSetting('lisa_api_url'),
       getSetting('lisa_agent_id'),
+      getSetting('mp_public_key'),
+      getSetting('mp_access_token'),
+      getSetting('mp_client_id'),
     ])
     return NextResponse.json({
       mpSandbox: sandbox !== null ? sandbox === 'true' : process.env.NEXT_PUBLIC_MP_SANDBOX === 'true',
+      mpPublicKey: mpPublicKey ?? process.env.NEXT_PUBLIC_MP_PUBLIC_KEY ?? '',
+      mpAccessToken: mpAccessToken ?? process.env.MP_ACCESS_TOKEN ?? '',
+      mpClientId: mpClientId ?? process.env.MP_CLIENT_ID ?? '',
       lisaSyncKey: lisaSyncKey ?? '',
       lisaApiUrl: lisaApiUrl ?? process.env.LISA_API_URL ?? '',
       lisaAgentId: lisaAgentId ?? process.env.LISA_AGENT_ID ?? '',
@@ -46,6 +52,13 @@ export async function PATCH(req: NextRequest) {
           ? 'Modo sandbox activado — los pagos son de prueba'
           : 'Modo producción activado — los pagos son reales',
       })
+    }
+
+    if (body.mpPublicKey !== undefined || body.mpAccessToken !== undefined || body.mpClientId !== undefined) {
+      if (body.mpPublicKey !== undefined) await setSetting('mp_public_key', body.mpPublicKey)
+      if (body.mpAccessToken !== undefined) await setSetting('mp_access_token', body.mpAccessToken)
+      if (body.mpClientId !== undefined) await setSetting('mp_client_id', body.mpClientId)
+      return NextResponse.json({ ok: true, message: 'Credenciales de MercadoPago guardadas' })
     }
 
     if (body.lisaSyncKey !== undefined || body.lisaApiUrl !== undefined || body.lisaAgentId !== undefined) {

@@ -47,11 +47,7 @@ const INTEGRATIONS: Integration[] = [
     color: 'text-blue-400',
     bgColor: 'bg-blue-500/15',
     status: 'connected',
-    fields: [
-      { key: 'NEXT_PUBLIC_MP_PUBLIC_KEY', label: 'Public Key', type: 'password', value: 'APP_USR-7ea3...dc0' },
-      { key: 'MP_ACCESS_TOKEN', label: 'Access Token', type: 'password', value: 'APP_USR-119...630' },
-      { key: 'MP_CLIENT_ID', label: 'Client ID', type: 'text', value: '1195812406544028' },
-    ],
+    fields: [],
     actions: [
       { label: 'Probar pago', action: 'test-mp', icon: CreditCard },
     ],
@@ -85,6 +81,13 @@ export default function IntegracionesPage() {
   const [switchingMode, setSwitchingMode] = useState(false)
   const [modeMessage, setModeMessage] = useState<string | null>(null)
 
+  // MP credentials state
+  const [mpPublicKey, setMpPublicKey] = useState('')
+  const [mpAccessToken, setMpAccessToken] = useState('')
+  const [mpClientId, setMpClientId] = useState('')
+  const [savingMp, setSavingMp] = useState(false)
+  const [mpMessage, setMpMessage] = useState<string | null>(null)
+
   // LISA state
   const [lisaSyncKey, setLisaSyncKey] = useState('')
   const [lisaApiUrl, setLisaApiUrl] = useState('')
@@ -97,6 +100,9 @@ export default function IntegracionesPage() {
       .then((r) => r.json())
       .then((d) => {
         setMpSandbox(d.mpSandbox ?? true)
+        setMpPublicKey(d.mpPublicKey ?? '')
+        setMpAccessToken(d.mpAccessToken ?? '')
+        setMpClientId(d.mpClientId ?? '')
         setLisaSyncKey(d.lisaSyncKey ?? '')
         setLisaApiUrl(d.lisaApiUrl ?? '')
         setLisaAgentId(d.lisaAgentId ?? '')
@@ -120,6 +126,23 @@ export default function IntegracionesPage() {
       setModeMessage('Error al cambiar el modo')
     }
     setSwitchingMode(false)
+  }
+
+  async function saveMpCredentials() {
+    setSavingMp(true)
+    setMpMessage(null)
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mpPublicKey, mpAccessToken, mpClientId }),
+      })
+      const data = await res.json()
+      setMpMessage(data.message ?? 'Guardado')
+    } catch {
+      setMpMessage('Error al guardar')
+    }
+    setSavingMp(false)
   }
 
   async function saveLisaSettings() {
@@ -386,26 +409,90 @@ export default function IntegracionesPage() {
                     </div>
                   )}
 
-                  <div className="space-y-3">
-                    {integration.fields.map((field) => (
-                      <div key={field.key}>
+                  {integration.id === 'mercadopago' ? (
+                    <div className="space-y-3">
+                      <div>
                         <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
                           <Shield className="h-3 w-3" />
-                          {field.label}
-                          <span className="text-[10px] text-primary/50">{field.key}</span>
+                          Public Key
+                          <span className="text-[10px] text-primary/50">NEXT_PUBLIC_MP_PUBLIC_KEY</span>
                         </label>
                         <Input
-                          type={field.type}
-                          defaultValue={field.value}
-                          readOnly
+                          type="password"
+                          placeholder="APP_USR-..."
+                          value={mpPublicKey}
+                          onChange={(e) => setMpPublicKey(e.target.value)}
                           className="bg-card border-primary/10 font-mono text-xs"
                         />
                       </div>
-                    ))}
-                    <p className="text-[11px] text-muted-foreground/60">
-                      Las credenciales se configuran en las variables de entorno del servidor (.env.local / Vercel)
-                    </p>
-                  </div>
+                      <div>
+                        <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                          <Shield className="h-3 w-3" />
+                          Access Token
+                          <span className="text-[10px] text-primary/50">MP_ACCESS_TOKEN</span>
+                        </label>
+                        <Input
+                          type="password"
+                          placeholder="APP_USR-..."
+                          value={mpAccessToken}
+                          onChange={(e) => setMpAccessToken(e.target.value)}
+                          className="bg-card border-primary/10 font-mono text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                          <Shield className="h-3 w-3" />
+                          Client ID
+                          <span className="text-[10px] text-primary/50">MP_CLIENT_ID</span>
+                        </label>
+                        <Input
+                          type="text"
+                          placeholder="1234567890"
+                          value={mpClientId}
+                          onChange={(e) => setMpClientId(e.target.value)}
+                          className="bg-card border-primary/10 font-mono text-xs"
+                        />
+                      </div>
+
+                      {mpMessage && (
+                        <div className={`rounded-lg p-3 text-xs font-medium ${
+                          mpMessage.includes('Error') ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
+                        }`}>
+                          {mpMessage}
+                        </div>
+                      )}
+
+                      <button
+                        onClick={saveMpCredentials}
+                        disabled={savingMp}
+                        className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                      >
+                        {savingMp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        {savingMp ? 'Guardando...' : 'Guardar credenciales'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {integration.fields.map((field) => (
+                        <div key={field.key}>
+                          <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                            <Shield className="h-3 w-3" />
+                            {field.label}
+                            <span className="text-[10px] text-primary/50">{field.key}</span>
+                          </label>
+                          <Input
+                            type={field.type}
+                            defaultValue={field.value}
+                            readOnly
+                            className="bg-card border-primary/10 font-mono text-xs"
+                          />
+                        </div>
+                      ))}
+                      <p className="text-[11px] text-muted-foreground/60">
+                        Las credenciales se configuran en las variables de entorno del servidor (.env.local / Vercel)
+                      </p>
+                    </div>
+                  )}
 
                   {/* Actions */}
                   {integration.actions && (

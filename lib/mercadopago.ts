@@ -1,15 +1,19 @@
 import { MercadoPagoConfig, Preference } from 'mercadopago'
 import type { CartItem } from './types'
+import { db } from './db'
 
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN!,
-})
+export async function getMpAccessToken(): Promise<string> {
+  const row = await db.siteSettings.findUnique({ where: { key: 'mp_access_token' } })
+  return row?.value || process.env.MP_ACCESS_TOKEN || ''
+}
 
 export async function createPreference(
   orderId: string,
   items: CartItem[],
   shipping: number
 ) {
+  const accessToken = await getMpAccessToken()
+  const client = new MercadoPagoConfig({ accessToken })
   const preference = new Preference(client)
 
   const mpItems = items.map((item) => ({
