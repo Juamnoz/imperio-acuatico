@@ -10,7 +10,7 @@ const SHIPPING_PRICES: Record<string, number> = {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { customerName, customerEmail, customerPhone, customerCity, customerAddress, shippingMethod, items, status } = body
+    const { customerName, customerEmail, customerPhone, customerCity, customerAddress, shippingMethod, items, status, source } = body
 
     if (!customerName || !customerEmail || !customerPhone || !customerCity) {
       return NextResponse.json({ error: 'Datos del cliente requeridos' }, { status: 400 })
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
         shipping,
         total: subtotal + shipping,
         status: status || 'PENDING',
-        source: 'direct',
+        source: source || 'direct',
         shippingMethod: shippingMethod || null,
         items: {
           create: items.map((i: { productId: string; name: string; price: number; quantity: number }) => ({
@@ -132,5 +132,24 @@ export async function PATCH(req: NextRequest) {
   } catch (error) {
     console.error('Admin order update error:', error)
     return NextResponse.json({ error: 'Error al actualizar pedido' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { orderId } = await req.json()
+
+    if (!orderId) {
+      return NextResponse.json({ error: 'orderId requerido' }, { status: 400 })
+    }
+
+    // Delete order items first, then the order
+    await db.orderItem.deleteMany({ where: { orderId } })
+    await db.order.delete({ where: { id: orderId } })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Admin order delete error:', error)
+    return NextResponse.json({ error: 'Error al eliminar pedido' }, { status: 500 })
   }
 }

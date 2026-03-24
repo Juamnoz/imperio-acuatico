@@ -5,6 +5,7 @@ import {
   Search, ChevronLeft, ChevronRight, Package,
   Mail, Phone, MapPin, Truck, FileText,
   Loader2, Globe, MessageCircle, Plus, Minus, Trash2, ShoppingCart,
+  Pencil,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -39,6 +40,12 @@ const SHIPPING_OPTIONS = [
   { id: 'tienda', label: 'Recoge en tienda', price: 0 },
   { id: 'domicilio', label: 'Domicilio Medellín', price: 20000 },
   { id: 'nacional', label: 'Envío nacional', price: 20000 },
+]
+
+const CHANNEL_OPTIONS = [
+  { id: 'web', label: 'Web' },
+  { id: 'whatsapp', label: 'WhatsApp' },
+  { id: 'direct', label: 'Directo' },
 ]
 
 interface CartItem {
@@ -106,8 +113,14 @@ export default function PedidosPage() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [shippingMethod, setShippingMethod] = useState('tienda')
   const [orderStatus, setOrderStatus] = useState('PAID')
+  const [orderSource, setOrderSource] = useState('whatsapp')
   const [saving, setSaving] = useState(false)
   const [createError, setCreateError] = useState('')
+
+  // Delete confirmation
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deletingOrder, setDeletingOrder] = useState<any | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchOrders = useCallback(async () => {
     setLoading(true)
@@ -158,6 +171,7 @@ export default function PedidosPage() {
     setCart([])
     setShippingMethod('tienda')
     setOrderStatus('PAID')
+    setOrderSource('whatsapp')
     setCreateError('')
     setCreateOpen(true)
   }
@@ -245,6 +259,7 @@ export default function PedidosPage() {
           customerAddress: address,
           shippingMethod,
           status: orderStatus,
+          source: orderSource,
           items: cart,
         }),
       })
@@ -259,6 +274,33 @@ export default function PedidosPage() {
       setCreateError('Error de conexión')
     } finally {
       setSaving(false)
+    }
+  }
+
+  function openEditOrder(order: any) {
+    setSelected(order)
+  }
+
+  function confirmDelete(order: any) {
+    setDeletingOrder(order)
+    setDeleteOpen(true)
+  }
+
+  async function handleDeleteOrder() {
+    if (!deletingOrder) return
+    setDeleting(true)
+    try {
+      await fetch('/api/admin/orders', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: deletingOrder.id }),
+      })
+      setDeleteOpen(false)
+      setDeletingOrder(null)
+      setSelected(null)
+      fetchOrders()
+    } catch { /* ignore */ } finally {
+      setDeleting(false)
     }
   }
 
@@ -328,6 +370,7 @@ export default function PedidosPage() {
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Estado</th>
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Fecha</th>
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Alegra</th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center w-24">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-primary/5">
@@ -336,25 +379,24 @@ export default function PedidosPage() {
                     return (
                       <tr
                         key={order.id}
-                        onClick={() => setSelected(order)}
-                        className="cursor-pointer transition-colors hover:bg-muted/30"
+                        className="transition-colors hover:bg-muted/30"
                       >
-                        <td className="px-5 py-3">
+                        <td className="px-5 py-3 cursor-pointer" onClick={() => setSelected(order)}>
                           <p className="text-sm font-medium">{order.customerName}</p>
                           <p className="text-xs text-muted-foreground">{order.customerEmail}</p>
                         </td>
-                        <td className="px-5 py-3">
+                        <td className="px-5 py-3 cursor-pointer" onClick={() => setSelected(order)}>
                           <ChannelBadge source={order.source} />
                         </td>
-                        <td className="px-5 py-3 text-sm text-muted-foreground">{order.items.length}</td>
-                        <td className="px-5 py-3 text-sm font-semibold">{formatCOP(order.total)}</td>
-                        <td className="px-5 py-3">
+                        <td className="px-5 py-3 text-sm text-muted-foreground cursor-pointer" onClick={() => setSelected(order)}>{order.items.length}</td>
+                        <td className="px-5 py-3 text-sm font-semibold cursor-pointer" onClick={() => setSelected(order)}>{formatCOP(order.total)}</td>
+                        <td className="px-5 py-3 cursor-pointer" onClick={() => setSelected(order)}>
                           <Badge variant={sc.variant} className="text-[10px]">{sc.label}</Badge>
                         </td>
-                        <td className="px-5 py-3 text-xs text-muted-foreground">
+                        <td className="px-5 py-3 text-xs text-muted-foreground cursor-pointer" onClick={() => setSelected(order)}>
                           {new Date(order.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </td>
-                        <td className="px-5 py-3">
+                        <td className="px-5 py-3 cursor-pointer" onClick={() => setSelected(order)}>
                           {order.alegraInvoiceId ? (
                             <Badge variant="secondary" className="text-[10px]">
                               <FileText className="mr-1 h-3 w-3" /> #{order.alegraInvoiceId}
@@ -362,6 +404,27 @@ export default function PedidosPage() {
                           ) : (
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => openEditOrder(order)}
+                              title="Editar pedido"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => confirmDelete(order)}
+                              title="Eliminar pedido"
+                              className="text-red-400 hover:text-red-300"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -516,6 +579,32 @@ export default function PedidosPage() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="sm:max-w-sm bg-card border-primary/10">
+          <DialogHeader>
+            <DialogTitle>Eliminar pedido</DialogTitle>
+            <DialogDescription>
+              {deletingOrder && (
+                <>
+                  ¿Estás seguro de eliminar el pedido <strong>#{deletingOrder.id.slice(-8)}</strong> de <strong>{deletingOrder.customerName}</strong> por <strong>{formatCOP(deletingOrder.total)}</strong>? Esta acción no se puede deshacer.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleting}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteOrder} disabled={deleting} className="gap-2">
+              {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              <Trash2 className="h-4 w-4" />
+              Eliminar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -693,8 +782,8 @@ export default function PedidosPage() {
               )}
             </div>
 
-            {/* Shipping & Status */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Shipping, Channel & Status */}
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">Método de envío</Label>
                 <Select value={shippingMethod} onValueChange={setShippingMethod}>
@@ -706,6 +795,19 @@ export default function PedidosPage() {
                       <SelectItem key={o.id} value={o.id}>
                         {o.label} {o.price > 0 ? `(${formatCOP(o.price)})` : '(Gratis)'}
                       </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Canal de venta</Label>
+                <Select value={orderSource} onValueChange={setOrderSource}>
+                  <SelectTrigger className="bg-background border-primary/10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CHANNEL_OPTIONS.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
