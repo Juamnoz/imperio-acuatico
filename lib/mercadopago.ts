@@ -3,7 +3,10 @@ import type { CartItem } from './types'
 import { db } from './db'
 
 export async function getMpAccessToken(): Promise<string> {
-  const row = await db.siteSettings.findUnique({ where: { key: 'mp_access_token' } })
+  const sandboxRow = await db.siteSettings.findUnique({ where: { key: 'mp_sandbox' } })
+  const isSandbox = sandboxRow ? sandboxRow.value === 'true' : process.env.NEXT_PUBLIC_MP_SANDBOX === 'true'
+  const tokenKey = isSandbox ? 'mp_sb_access_token' : 'mp_prod_access_token'
+  const row = await db.siteSettings.findUnique({ where: { key: tokenKey } })
   return row?.value || process.env.MP_ACCESS_TOKEN || ''
 }
 

@@ -81,12 +81,15 @@ export default function IntegracionesPage() {
   const [switchingMode, setSwitchingMode] = useState(false)
   const [modeMessage, setModeMessage] = useState<string | null>(null)
 
-  // MP credentials state
-  const [mpPublicKey, setMpPublicKey] = useState('')
-  const [mpAccessToken, setMpAccessToken] = useState('')
+  // MP credentials state — sandbox
+  const [mpSbPublicKey, setMpSbPublicKey] = useState('')
+  const [mpSbAccessToken, setMpSbAccessToken] = useState('')
+  const [mpSbTestUser, setMpSbTestUser] = useState('')
+  const [mpSbTestPass, setMpSbTestPass] = useState('')
+  // MP credentials state — production
+  const [mpProdPublicKey, setMpProdPublicKey] = useState('')
+  const [mpProdAccessToken, setMpProdAccessToken] = useState('')
   const [mpClientId, setMpClientId] = useState('')
-  const [mpTestUser, setMpTestUser] = useState('')
-  const [mpTestPass, setMpTestPass] = useState('')
   const [savingMp, setSavingMp] = useState(false)
   const [mpMessage, setMpMessage] = useState<string | null>(null)
 
@@ -102,11 +105,13 @@ export default function IntegracionesPage() {
       .then((r) => r.json())
       .then((d) => {
         setMpSandbox(d.mpSandbox ?? true)
-        setMpPublicKey(d.mpPublicKey ?? '')
-        setMpAccessToken(d.mpAccessToken ?? '')
+        setMpSbPublicKey(d.mpSbPublicKey ?? '')
+        setMpSbAccessToken(d.mpSbAccessToken ?? '')
+        setMpSbTestUser(d.mpSbTestUser ?? '')
+        setMpSbTestPass(d.mpSbTestPass ?? '')
+        setMpProdPublicKey(d.mpProdPublicKey ?? '')
+        setMpProdAccessToken(d.mpProdAccessToken ?? '')
         setMpClientId(d.mpClientId ?? '')
-        setMpTestUser(d.mpTestUser ?? '')
-        setMpTestPass(d.mpTestPass ?? '')
         setLisaSyncKey(d.lisaSyncKey ?? '')
         setLisaApiUrl(d.lisaApiUrl ?? '')
         setLisaAgentId(d.lisaAgentId ?? '')
@@ -139,7 +144,10 @@ export default function IntegracionesPage() {
       const res = await fetch('/api/admin/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mpPublicKey, mpAccessToken, mpClientId, mpTestUser, mpTestPass }),
+        body: JSON.stringify({
+          mpSbPublicKey, mpSbAccessToken, mpSbTestUser, mpSbTestPass,
+          mpProdPublicKey, mpProdAccessToken, mpClientId,
+        }),
       })
       const data = await res.json()
       setMpMessage(data.message ?? 'Guardado')
@@ -385,15 +393,15 @@ export default function IntegracionesPage() {
                       {/* Sandbox test credentials */}
                       {mpSandbox && (
                         <div className="mt-4 rounded-lg bg-amber-500/5 border border-amber-500/10 p-3 space-y-3">
-                          <p className="text-xs font-semibold text-amber-400">Credenciales de comprador de prueba</p>
+                          <p className="text-xs font-semibold text-amber-400">Comprador de prueba</p>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <label className="mb-1 block text-[11px] text-muted-foreground">Usuario</label>
                               <Input
                                 type="text"
                                 placeholder="TESTUSER..."
-                                value={mpTestUser}
-                                onChange={(e) => setMpTestUser(e.target.value)}
+                                value={mpSbTestUser}
+                                onChange={(e) => setMpSbTestUser(e.target.value)}
                                 className="bg-card border-amber-500/20 font-mono text-xs"
                               />
                             </div>
@@ -402,8 +410,8 @@ export default function IntegracionesPage() {
                               <Input
                                 type="text"
                                 placeholder="Contraseña de prueba"
-                                value={mpTestPass}
-                                onChange={(e) => setMpTestPass(e.target.value)}
+                                value={mpSbTestPass}
+                                onChange={(e) => setMpSbTestPass(e.target.value)}
                                 className="bg-card border-amber-500/20 font-mono text-xs"
                               />
                             </div>
@@ -426,40 +434,74 @@ export default function IntegracionesPage() {
                   )}
 
                   {integration.id === 'mercadopago' ? (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                          <Shield className="h-3 w-3" />
-                          Public Key
-                          <span className="text-[10px] text-primary/50">NEXT_PUBLIC_MP_PUBLIC_KEY</span>
-                        </label>
-                        <Input
-                          type="password"
-                          placeholder="APP_USR-..."
-                          value={mpPublicKey}
-                          onChange={(e) => setMpPublicKey(e.target.value)}
-                          className="bg-card border-primary/10 font-mono text-xs"
-                        />
+                    <div className="space-y-5">
+                      {/* Sandbox credentials */}
+                      <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 space-y-3">
+                        <p className="text-xs font-semibold text-amber-400">Credenciales Sandbox</p>
+                        <div>
+                          <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                            <Shield className="h-3 w-3" />
+                            Public Key (sandbox)
+                          </label>
+                          <Input
+                            type="password"
+                            placeholder="APP_USR-..."
+                            value={mpSbPublicKey}
+                            onChange={(e) => setMpSbPublicKey(e.target.value)}
+                            className="bg-card border-amber-500/20 font-mono text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                            <Shield className="h-3 w-3" />
+                            Access Token (sandbox)
+                          </label>
+                          <Input
+                            type="password"
+                            placeholder="APP_USR-..."
+                            value={mpSbAccessToken}
+                            onChange={(e) => setMpSbAccessToken(e.target.value)}
+                            className="bg-card border-amber-500/20 font-mono text-xs"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                          <Shield className="h-3 w-3" />
-                          Access Token
-                          <span className="text-[10px] text-primary/50">MP_ACCESS_TOKEN</span>
-                        </label>
-                        <Input
-                          type="password"
-                          placeholder="APP_USR-..."
-                          value={mpAccessToken}
-                          onChange={(e) => setMpAccessToken(e.target.value)}
-                          className="bg-card border-primary/10 font-mono text-xs"
-                        />
+
+                      {/* Production credentials */}
+                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-3">
+                        <p className="text-xs font-semibold text-emerald-400">Credenciales Producción</p>
+                        <div>
+                          <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                            <Shield className="h-3 w-3" />
+                            Public Key (producción)
+                          </label>
+                          <Input
+                            type="password"
+                            placeholder="APP_USR-..."
+                            value={mpProdPublicKey}
+                            onChange={(e) => setMpProdPublicKey(e.target.value)}
+                            className="bg-card border-emerald-500/20 font-mono text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                            <Shield className="h-3 w-3" />
+                            Access Token (producción)
+                          </label>
+                          <Input
+                            type="password"
+                            placeholder="APP_USR-..."
+                            value={mpProdAccessToken}
+                            onChange={(e) => setMpProdAccessToken(e.target.value)}
+                            className="bg-card border-emerald-500/20 font-mono text-xs"
+                          />
+                        </div>
                       </div>
+
+                      {/* Client ID (shared) */}
                       <div>
                         <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
                           <Shield className="h-3 w-3" />
                           Client ID
-                          <span className="text-[10px] text-primary/50">MP_CLIENT_ID</span>
                         </label>
                         <Input
                           type="text"
