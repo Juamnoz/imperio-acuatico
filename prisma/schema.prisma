@@ -82,6 +82,7 @@ model Order {
   trackingNumber  String?
   notes           String?
   source          String      @default("web") // web | whatsapp | direct
+  lisaOrderId     String?     @unique
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { notifyLisaOrderStatus } from '@/lib/lisa'
 
 const SHIPPING_PRICES: Record<string, number> = {
   tienda: 0,
@@ -145,6 +146,11 @@ export async function PATCH(req: NextRequest) {
       data,
       include: { items: true },
     })
+
+    // Notify LISA about status change
+    if (status && order.lisaOrderId) {
+      notifyLisaOrderStatus(order).catch(() => {})
+    }
 
     return NextResponse.json(order)
   } catch (error) {

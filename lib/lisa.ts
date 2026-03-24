@@ -60,3 +60,53 @@ export async function notifyLisaPayment(order: {
     }),
   })
 }
+
+export async function notifyLisaOrderStatus(order: {
+  id: string
+  lisaOrderId?: string | null
+  status: string
+  trackingNumber?: string | null
+}) {
+  const { syncKey, apiUrl, agentId } = await getLisaConfig()
+  if (!agentId || !syncKey) return
+  // If the order has a lisaOrderId, update status in LISA via the orders endpoint
+  // Use the payment-update endpoint which already handles status mapping
+  await fetch(`${apiUrl}/v1/webhooks/store/${agentId}/payment-update`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-lisa-sync-key': syncKey },
+    body: JSON.stringify({
+      externalId: order.id,
+      status: order.status, // PAID | CANCELLED | PENDING etc.
+    }),
+  })
+}
+
+export async function notifyLisaProduct(product: any) {
+  const { syncKey, apiUrl, agentId } = await getLisaConfig()
+  if (!apiUrl || !agentId || !syncKey) return
+
+  let imageUrl: string | null = null
+  try {
+    const imgs = JSON.parse(product.images || '[]')
+    imageUrl = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null
+  } catch {}
+  if (imageUrl && !imageUrl.startsWith('http')) {
+    const siteUrl = process.env.NEXT_PUBLIC_URL || ''
+    imageUrl = siteUrl ? `${siteUrl}${imageUrl}` : null
+  }
+
+  await fetch(`${apiUrl}/v1/webhooks/store/${agentId}/sync/product`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-lisa-sync-key': syncKey },
+    body: JSON.stringify({
+      agentId,
+      externalId: product.id,
+      name: product.name,
+      price: product.price,
+      stock: product.stock,
+      isActive: product.available,
+      description: product.description ?? null,
+      imageUrl,
+    }),
+  })
+}

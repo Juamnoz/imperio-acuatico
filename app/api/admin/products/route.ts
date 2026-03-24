@@ -1,47 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { createItem as createAlegraItem } from '@/lib/alegra'
-
-const LISA_API = process.env.LISA_API_URL || ''
-const LISA_AGENT_ID = process.env.LISA_AGENT_ID || ''
-
-async function notifyLisaProduct(product: any) {
-  const [syncKeyRow, apiUrlRow, agentIdRow] = await Promise.all([
-    db.siteSettings.findUnique({ where: { key: 'lisa_sync_key' } }),
-    db.siteSettings.findUnique({ where: { key: 'lisa_api_url' } }),
-    db.siteSettings.findUnique({ where: { key: 'lisa_agent_id' } }),
-  ])
-  const syncKey = syncKeyRow?.value || ''
-  const rawApiUrl = apiUrlRow?.value || LISA_API || ''
-  const apiUrl = rawApiUrl.replace(/\/v1\/?$/, '')
-  const agentId = agentIdRow?.value || LISA_AGENT_ID || ''
-  if (!apiUrl || !agentId || !syncKey) return
-
-  let imageUrl: string | null = null
-  try {
-    const imgs = JSON.parse(product.images || '[]')
-    imageUrl = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null
-  } catch {}
-  if (imageUrl && !imageUrl.startsWith('http')) {
-    const siteUrl = process.env.NEXT_PUBLIC_URL || ''
-    imageUrl = siteUrl ? `${siteUrl}${imageUrl}` : null
-  }
-
-  await fetch(`${apiUrl}/v1/webhooks/store/${agentId}/sync/product`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-lisa-sync-key': syncKey },
-    body: JSON.stringify({
-      agentId,
-      externalId: product.id,
-      name: product.name,
-      price: product.price,
-      stock: product.stock,
-      isActive: product.available,
-      description: product.description ?? null,
-      imageUrl,
-    }),
-  })
-}
+import { notifyLisaProduct } from '@/lib/lisa'
 
 export async function GET(req: NextRequest) {
   try {
@@ -214,5 +174,31 @@ export async function PATCH(req: NextRequest) {
   } catch (error) {
     console.error('Admin product update error:', error)
     return NextResponse.json({ error: 'Error al actualizar producto' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { productId } = await req.json()
+
+    if (!productId) {
+      return NextResponse.json({ error: 'productId requerido' }, { status: 400 })
+    }
+
+    const product = await db.product.findUnique({ where: { id: productId } })
+    if (!product) {
+      return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
+    }
+
+    // Delete the product
+    await db.product.delete({ where: { id: productId } })
+
+    // Notify LISA to deactivate
+    await notifyLisaProduct({ ...product, available: false }).catch(() => {})
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Admin product delete error:', error)
+    return NextResponse.json({ error: 'Error al eliminar producto' }, { status: 500 })
   }
 }
