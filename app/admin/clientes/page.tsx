@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   Users, Mail, Phone, MapPin, ShoppingCart,
   CheckCircle, XCircle, Search, Send,
-  Loader2, Plus, Pencil, RotateCw, UserPlus,
+  Loader2, Plus, Pencil, UserPlus,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -382,25 +382,14 @@ export default function ClientesPage() {
                       <span className="text-xs text-muted-foreground">{timeAgo(customer.lastOrder)}</span>
                     </td>
                     <td className="px-5 py-3 text-center">
-                      {customer.isRegistered ? (
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => openEdit(customer)}
-                          title="Editar cliente"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => registerOrphan(customer)}
-                          title="Registrar cliente"
-                        >
-                          <UserPlus className="h-4 w-4 text-amber-400" />
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => customer.isRegistered ? openEdit(customer) : registerOrphan(customer)}
+                        title="Editar cliente"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -479,9 +468,9 @@ export default function ClientesPage() {
                           variant="ghost"
                           size="icon-sm"
                           onClick={() => openResend(email)}
-                          title="Reenviar email"
+                          title="Editar y reenviar"
                         >
-                          <RotateCw className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                       )}
                     </td>
@@ -590,13 +579,13 @@ export default function ClientesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Resend Email Modal */}
+      {/* Edit & Resend Email Modal */}
       <Dialog open={resendOpen} onOpenChange={setResendOpen}>
         <DialogContent className="sm:max-w-md bg-card border-primary/10">
           <DialogHeader>
-            <DialogTitle>Reenviar email</DialogTitle>
+            <DialogTitle>Editar y reenviar email</DialogTitle>
             <DialogDescription>
-              Puedes cambiar el destinatario antes de reenviar.
+              Edita los datos del destinatario y reenvía el email del pedido.
             </DialogDescription>
           </DialogHeader>
 
@@ -614,18 +603,46 @@ export default function ClientesPage() {
             <>
               <div className="space-y-4">
                 <div className="rounded-lg border border-primary/10 bg-background p-3">
-                  <p className="text-xs text-muted-foreground mb-1">Asunto original</p>
+                  <p className="text-xs text-muted-foreground mb-1">Asunto</p>
                   <p className="text-sm">{resendEmail?.subject}</p>
+                  <div className="flex items-center gap-4 mt-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Tipo</p>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] mt-0.5 ${
+                          resendEmail?.type === 'order_confirmation'
+                            ? 'border-blue-400/30 text-blue-400'
+                            : 'border-amber-400/30 text-amber-400'
+                        }`}
+                      >
+                        {resendEmail?.type === 'order_confirmation' ? 'Confirmación' : 'Admin'}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Estado anterior</p>
+                      <Badge
+                        variant={resendEmail?.status === 'sent' ? 'default' : 'destructive'}
+                        className="text-[10px] mt-0.5"
+                      >
+                        {resendEmail?.status === 'sent' ? 'Enviado' : 'Fallido'}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="resend-to">Destinatario</Label>
+                  <Label htmlFor="resend-to">Correo destinatario</Label>
                   <Input
                     id="resend-to"
                     type="email"
                     value={resendTo}
                     onChange={(e) => setResendTo(e.target.value)}
+                    placeholder="correo@ejemplo.com"
                     className="bg-background border-primary/10"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Puedes cambiar el correo para reenviar a otro destinatario.
+                  </p>
                 </div>
               </div>
               <DialogFooter>
@@ -635,7 +652,7 @@ export default function ClientesPage() {
                 <Button onClick={handleResend} disabled={resending || !resendTo} className="gap-2">
                   {resending && <Loader2 className="h-4 w-4 animate-spin" />}
                   <Send className="h-4 w-4" />
-                  Reenviar
+                  Reenviar email
                 </Button>
               </DialogFooter>
             </>
