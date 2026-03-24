@@ -146,7 +146,7 @@ export default function ClientesPage() {
     setSaving(true)
     setModalError('')
     try {
-      const isEdit = modalMode === 'edit' && editingId
+      const isEdit = editingId !== null
       const res = await fetch('/api/admin/customers', {
         method: isEdit ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -194,7 +194,7 @@ export default function ClientesPage() {
   }
 
   // Register an orphan customer (from orders)
-  async function registerOrphan(customer: Customer) {
+  function registerOrphan(customer: Customer) {
     setForm({
       name: customer.name,
       email: customer.email,
@@ -204,7 +204,7 @@ export default function ClientesPage() {
       notes: '',
     })
     setEditingId(null)
-    setModalMode('create')
+    setModalMode('edit')
     setModalError('')
     setModalOpen(true)
   }
