@@ -8,9 +8,9 @@ const orderSchema = z.object({
   customerName: z.string().min(2),
   customerEmail: z.string().email(),
   customerPhone: z.string().min(7),
+  documentId: z.string().min(5).optional(),
   customerCity: z.string().min(2),
   customerAddress: z.string().min(5),
-  customerId: z.string().optional(),
   shippingMethod: z.enum(['tienda', 'domicilio', 'nacional']),
   notes: z.string().optional(),
   idempotencyKey: z.string().optional(),
@@ -61,6 +61,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(existingOrder, { status: 200 })
     }
 
+    // Buscar o crear Customer por email para vincular la orden
+    const customer = await db.customer.upsert({
+      where: { email: data.customerEmail },
+      update: {
+        name: data.customerName,
+        phone: data.customerPhone,
+        city: data.customerCity,
+        address: data.customerAddress,
+        ...(data.documentId ? { documentId: data.documentId } : {}),
+      },
+      create: {
+        name: data.customerName,
+        email: data.customerEmail,
+        phone: data.customerPhone,
+        city: data.customerCity,
+        address: data.customerAddress,
+        documentId: data.documentId ?? '',
+      },
+    })
+
     const order = await db.order.create({
       data: {
         customerName: data.customerName,
@@ -68,7 +88,7 @@ export async function POST(req: NextRequest) {
         customerPhone: data.customerPhone,
         customerCity: data.customerCity,
         customerAddress: data.customerAddress,
-        customerId: data.customerId,
+        customerId: customer.id,
         shippingMethod: data.shippingMethod,
         notes: data.notes,
         subtotal,

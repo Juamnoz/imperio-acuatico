@@ -16,9 +16,9 @@ const schema = z.object({
   customerName: z.string().min(2, 'Nombre requerido'),
   customerEmail: z.string().email('Email inválido'),
   customerPhone: z.string().min(7, 'Teléfono requerido'),
+  documentId: z.string().min(5, 'Cédula requerida'),
   customerCity: z.string().min(2, 'Ciudad requerida'),
   customerAddress: z.string().min(5, 'Dirección requerida'),
-  customerId: z.string().optional(),
   shippingMethod: z.enum(['tienda', 'domicilio', 'nacional']),
   notes: z.string().optional(),
 })
@@ -151,12 +151,13 @@ export function CheckoutClient() {
               {errors.customerName && <p className="mt-1 text-xs text-destructive">{errors.customerName.message}</p>}
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Cédula (opcional)</label>
+              <label className="mb-1.5 block text-sm font-medium">Cédula *</label>
               <input
-                {...register('customerId')}
+                {...register('documentId')}
                 placeholder="1234567890"
                 className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
               />
+              {errors.documentId && <p className="mt-1 text-xs text-destructive">{errors.documentId.message}</p>}
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium">Email *</label>

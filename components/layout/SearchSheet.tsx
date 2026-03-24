@@ -100,7 +100,7 @@ export function SearchSheet() {
       {/* Trigger button — desktop only (mobile uses MobileNav) */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-30 hidden md:flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:scale-105 hover:shadow-primary/50"
+        className="fixed bottom-20 right-6 z-30 hidden md:flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:scale-105 hover:shadow-primary/50"
         aria-label="Buscar productos"
       >
         <Search className="h-5 w-5" />

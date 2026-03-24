@@ -46,13 +46,14 @@ model Product {
 }
 
 model Customer {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  phone     String
-  city      String
-  address   String   @default("")
-  notes     String?
+  id         String   @id @default(cuid())
+  name       String
+  email      String   @unique
+  phone      String
+  city       String
+  address    String   @default("")
+  documentId String   @default("")
+  notes      String?
   orders    Order[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
