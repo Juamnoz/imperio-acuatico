@@ -1,6 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
+const SHIPPING_PRICES: Record<string, number> = {
+  tienda: 0,
+  domicilio: 20000,
+  nacional: 20000,
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { customerName, customerEmail, customerPhone, customerCity, customerAddress, shippingMethod, items, status } = body
+
+    if (!customerName || !customerEmail || !customerPhone || !customerCity) {
+      return NextResponse.json({ error: 'Datos del cliente requeridos' }, { status: 400 })
+    }
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'Agrega al menos un producto' }, { status: 400 })
+    }
+
+    const subtotal = items.reduce((s: number, i: { price: number; quantity: number }) => s + i.price * i.quantity, 0)
+    const shipping = SHIPPING_PRICES[shippingMethod] ?? 0
+
+    // Find or create customer
+    let customer = await db.customer.findUnique({ where: { email: customerEmail.toLowerCase() } })
+    if (!customer) {
+      customer = await db.customer.create({
+        data: {
+          name: customerName,
+          email: customerEmail.toLowerCase(),
+          phone: customerPhone,
+          city: customerCity,
+          address: customerAddress || '',
+        },
+      })
+    }
+
+    const order = await db.order.create({
+      data: {
+        customerName,
+        customerEmail: customerEmail.toLowerCase(),
+        customerPhone,
+        customerCity,
+        customerAddress: customerAddress || '',
+        customerId: customer.id,
+        subtotal,
+        shipping,
+        total: subtotal + shipping,
+        status: status || 'PENDING',
+        source: 'direct',
+        shippingMethod: shippingMethod || null,
+        items: {
+          create: items.map((i: { productId: string; name: string; price: number; quantity: number }) => ({
+            productId: i.productId,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+          })),
+        },
+      },
+      include: { items: true },
+    })
+
+    return NextResponse.json({ order })
+  } catch (error) {
+    console.error('Create order error:', error)
+    return NextResponse.json({ error: 'Error creando pedido' }, { status: 500 })
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)

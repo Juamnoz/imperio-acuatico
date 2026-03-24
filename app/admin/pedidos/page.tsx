@@ -1,13 +1,15 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import {
   Search, ChevronLeft, ChevronRight, Package,
   Mail, Phone, MapPin, Truck, FileText,
-  Loader2, Globe, MessageCircle,
+  Loader2, Globe, MessageCircle, Plus, Minus, Trash2, ShoppingCart,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -20,6 +22,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog'
 
 const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; color: string }> = {
@@ -29,6 +33,27 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secon
   SHIPPED: { label: 'Enviado', variant: 'secondary', color: 'text-violet-400' },
   DELIVERED: { label: 'Entregado', variant: 'default', color: 'text-emerald-400' },
   CANCELLED: { label: 'Cancelado', variant: 'destructive', color: 'text-red-400' },
+}
+
+const SHIPPING_OPTIONS = [
+  { id: 'tienda', label: 'Recoge en tienda', price: 0 },
+  { id: 'domicilio', label: 'Domicilio Medellín', price: 20000 },
+  { id: 'nacional', label: 'Envío nacional', price: 20000 },
+]
+
+interface CartItem {
+  productId: string
+  name: string
+  price: number
+  quantity: number
+}
+
+interface SimpleProduct {
+  id: string
+  name: string
+  price: number
+  stock: number
+  available: boolean
 }
 
 function formatCOP(n: number) {
@@ -43,12 +68,21 @@ function ChannelBadge({ source }: { source?: string }) {
       </span>
     )
   }
+  if (source === 'direct') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-400">
+        <Package className="h-3 w-3" /> Directo
+      </span>
+    )
+  }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-400">
       <Globe className="h-3 w-3" /> Web
     </span>
   )
 }
+
+const emptyCustomerForm = { name: '', email: '', phone: '', city: '', address: '' }
 
 export default function PedidosPage() {
   const [orders, setOrders] = useState<any[]>([])
@@ -60,6 +94,20 @@ export default function PedidosPage() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<any | null>(null)
   const [updating, setUpdating] = useState(false)
+
+  // Create order modal
+  const [createOpen, setCreateOpen] = useState(false)
+  const [customerForm, setCustomerForm] = useState(emptyCustomerForm)
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [customers, setCustomers] = useState<any[]>([])
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
+  const [products, setProducts] = useState<SimpleProduct[]>([])
+  const [productSearch, setProductSearch] = useState('')
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [shippingMethod, setShippingMethod] = useState('tienda')
+  const [orderStatus, setOrderStatus] = useState('PAID')
+  const [saving, setSaving] = useState(false)
+  const [createError, setCreateError] = useState('')
 
   const fetchOrders = useCallback(async () => {
     setLoading(true)
@@ -77,6 +125,17 @@ export default function PedidosPage() {
 
   useEffect(() => { fetchOrders() }, [fetchOrders])
 
+  // Fetch products and customers when create modal opens
+  useEffect(() => {
+    if (!createOpen) return
+    fetch('/api/admin/products?limit=500')
+      .then((r) => r.json())
+      .then((data) => setProducts((data.products || []).filter((p: SimpleProduct) => p.available)))
+    fetch('/api/admin/customers')
+      .then((r) => r.json())
+      .then((data) => setCustomers(data.customers || []))
+  }, [createOpen])
+
   async function updateOrder(orderId: string, data: any) {
     setUpdating(true)
     await fetch('/api/admin/orders', {
@@ -91,12 +150,130 @@ export default function PedidosPage() {
     setUpdating(false)
   }
 
+  // Create order modal helpers
+  function openCreateOrder() {
+    setCustomerForm(emptyCustomerForm)
+    setCustomerSearch('')
+    setProductSearch('')
+    setCart([])
+    setShippingMethod('tienda')
+    setOrderStatus('PAID')
+    setCreateError('')
+    setCreateOpen(true)
+  }
+
+  function selectCustomer(c: any) {
+    setCustomerForm({
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      city: c.city,
+      address: c.address || '',
+    })
+    setCustomerSearch('')
+    setShowCustomerDropdown(false)
+  }
+
+  function addToCart(product: SimpleProduct) {
+    setCart((prev) => {
+      const existing = prev.find((i) => i.productId === product.id)
+      if (existing) {
+        return prev.map((i) => i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i)
+      }
+      return [...prev, { productId: product.id, name: product.name, price: product.price, quantity: 1 }]
+    })
+    setProductSearch('')
+  }
+
+  function updateQuantity(productId: string, delta: number) {
+    setCart((prev) =>
+      prev
+        .map((i) => i.productId === productId ? { ...i, quantity: i.quantity + delta } : i)
+        .filter((i) => i.quantity > 0)
+    )
+  }
+
+  function removeFromCart(productId: string) {
+    setCart((prev) => prev.filter((i) => i.productId !== productId))
+  }
+
+  const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0)
+  const shippingCost = SHIPPING_OPTIONS.find((o) => o.id === shippingMethod)?.price ?? 0
+  const orderTotal = subtotal + shippingCost
+
+  const filteredProducts = useMemo(() => {
+    if (!productSearch) return []
+    const q = productSearch.toLowerCase()
+    return products
+      .filter((p) => p.name.toLowerCase().includes(q) && !cart.some((c) => c.productId === p.id))
+      .slice(0, 8)
+  }, [productSearch, products, cart])
+
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearch) return []
+    const q = customerSearch.toLowerCase()
+    return customers
+      .filter((c: any) =>
+        c.name.toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q) ||
+        c.phone.includes(q)
+      )
+      .slice(0, 5)
+  }, [customerSearch, customers])
+
+  async function handleCreateOrder() {
+    const { name, email, phone, city, address } = customerForm
+    if (!name || !email || !phone || !city) {
+      setCreateError('Completa los datos del cliente')
+      return
+    }
+    if (cart.length === 0) {
+      setCreateError('Agrega al menos un producto')
+      return
+    }
+    setSaving(true)
+    setCreateError('')
+    try {
+      const res = await fetch('/api/admin/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: name,
+          customerEmail: email,
+          customerPhone: phone,
+          customerCity: city,
+          customerAddress: address,
+          shippingMethod,
+          status: orderStatus,
+          items: cart,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setCreateError(data.error || 'Error creando pedido')
+        return
+      }
+      setCreateOpen(false)
+      fetchOrders()
+    } catch {
+      setCreateError('Error de conexión')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-2xl font-bold">Pedidos</h1>
-        <p className="text-sm text-muted-foreground">{total} pedidos en total</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Pedidos</h1>
+          <p className="text-sm text-muted-foreground">{total} pedidos en total</p>
+        </div>
+        <Button onClick={openCreateOrder} className="gap-2">
+          <ShoppingCart className="h-4 w-4" />
+          Crear pedido
+        </Button>
       </div>
 
       {/* Filters */}
@@ -284,7 +461,7 @@ export default function PedidosPage() {
                       <div key={item.id} className="flex items-center justify-between px-4 py-2.5">
                         <div>
                           <p className="text-sm">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">×{item.quantity}</p>
+                          <p className="text-xs text-muted-foreground">x{item.quantity}</p>
                         </div>
                         <p className="text-sm font-medium">{formatCOP(item.price * item.quantity)}</p>
                       </div>
@@ -339,6 +516,247 @@ export default function PedidosPage() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Order Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-2xl bg-card border-primary/10 max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Crear pedido</DialogTitle>
+            <DialogDescription>
+              Busca un cliente existente o ingresa los datos manualmente.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5">
+            {/* Customer section */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Datos del cliente</p>
+
+              {/* Customer search */}
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar cliente existente por nombre, email o teléfono..."
+                  value={customerSearch}
+                  onChange={(e) => { setCustomerSearch(e.target.value); setShowCustomerDropdown(true) }}
+                  onFocus={() => setShowCustomerDropdown(true)}
+                  className="pl-9 bg-background border-primary/10"
+                />
+                {showCustomerDropdown && filteredCustomers.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-lg border border-primary/10 bg-card shadow-lg">
+                    {filteredCustomers.map((c: any) => (
+                      <button
+                        key={c.email}
+                        onClick={() => selectCustomer(c)}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/30"
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                          {c.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{c.name}</p>
+                          <p className="text-xs text-muted-foreground">{c.email} · {c.phone}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Nombre *</Label>
+                  <Input
+                    value={customerForm.name}
+                    onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })}
+                    placeholder="Nombre completo"
+                    className="bg-background border-primary/10"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Email *</Label>
+                  <Input
+                    type="email"
+                    value={customerForm.email}
+                    onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })}
+                    placeholder="correo@ejemplo.com"
+                    className="bg-background border-primary/10"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Teléfono *</Label>
+                  <Input
+                    value={customerForm.phone}
+                    onChange={(e) => setCustomerForm({ ...customerForm, phone: e.target.value })}
+                    placeholder="3001234567"
+                    className="bg-background border-primary/10"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Ciudad *</Label>
+                  <Input
+                    value={customerForm.city}
+                    onChange={(e) => setCustomerForm({ ...customerForm, city: e.target.value })}
+                    placeholder="Medellín"
+                    className="bg-background border-primary/10"
+                  />
+                </div>
+              </div>
+              <div className="mt-3 space-y-1.5">
+                <Label className="text-xs">Dirección</Label>
+                <Input
+                  value={customerForm.address}
+                  onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })}
+                  placeholder="Dirección de envío"
+                  className="bg-background border-primary/10"
+                />
+              </div>
+            </div>
+
+            {/* Products section */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Productos</p>
+
+              {/* Product search */}
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar producto..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="pl-9 bg-background border-primary/10"
+                />
+                {filteredProducts.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-lg border border-primary/10 bg-card shadow-lg">
+                    {filteredProducts.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => addToCart(p)}
+                        className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-muted/30"
+                      >
+                        <div>
+                          <p className="text-sm">{p.name}</p>
+                          <p className="text-xs text-muted-foreground">Stock: {p.stock}</p>
+                        </div>
+                        <p className="text-sm font-semibold text-primary">{formatCOP(p.price)}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Cart */}
+              {cart.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-primary/10 py-8">
+                  <Package className="h-8 w-8 text-muted-foreground/30" />
+                  <p className="text-xs text-muted-foreground">Busca y agrega productos al pedido</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-primary/5 rounded-lg border border-primary/10">
+                  {cart.map((item) => (
+                    <div key={item.productId} className="flex items-center justify-between px-4 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm truncate">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatCOP(item.price)} c/u</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => updateQuantity(item.productId, -1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => updateQuantity(item.productId, 1)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-20 text-right text-sm font-medium">{formatCOP(item.price * item.quantity)}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => removeFromCart(item.productId)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Shipping & Status */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Método de envío</Label>
+                <Select value={shippingMethod} onValueChange={setShippingMethod}>
+                  <SelectTrigger className="bg-background border-primary/10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SHIPPING_OPTIONS.map((o) => (
+                      <SelectItem key={o.id} value={o.id}>
+                        {o.label} {o.price > 0 ? `(${formatCOP(o.price)})` : '(Gratis)'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Estado del pedido</Label>
+                <Select value={orderStatus} onValueChange={setOrderStatus}>
+                  <SelectTrigger className="bg-background border-primary/10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(STATUS_CONFIG).map(([key, val]) => (
+                      <SelectItem key={key} value={key}>{val.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Totals */}
+            {cart.length > 0 && (
+              <div className="rounded-lg bg-muted/20 p-4 space-y-1.5">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span>{formatCOP(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Envío</span>
+                  <span>{shippingCost === 0 ? 'Gratis' : formatCOP(shippingCost)}</span>
+                </div>
+                <div className="flex justify-between text-base font-bold border-t border-primary/10 pt-2 mt-2">
+                  <span>Total</span>
+                  <span className="text-primary">{formatCOP(orderTotal)}</span>
+                </div>
+              </div>
+            )}
+
+            {createError && (
+              <p className="text-sm text-red-400">{createError}</p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateOrder} disabled={saving} className="gap-2">
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              Crear pedido
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
