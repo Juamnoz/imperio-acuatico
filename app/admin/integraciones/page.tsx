@@ -85,6 +85,8 @@ export default function IntegracionesPage() {
   const [mpPublicKey, setMpPublicKey] = useState('')
   const [mpAccessToken, setMpAccessToken] = useState('')
   const [mpClientId, setMpClientId] = useState('')
+  const [mpTestUser, setMpTestUser] = useState('')
+  const [mpTestPass, setMpTestPass] = useState('')
   const [savingMp, setSavingMp] = useState(false)
   const [mpMessage, setMpMessage] = useState<string | null>(null)
 
@@ -103,6 +105,8 @@ export default function IntegracionesPage() {
         setMpPublicKey(d.mpPublicKey ?? '')
         setMpAccessToken(d.mpAccessToken ?? '')
         setMpClientId(d.mpClientId ?? '')
+        setMpTestUser(d.mpTestUser ?? '')
+        setMpTestPass(d.mpTestPass ?? '')
         setLisaSyncKey(d.lisaSyncKey ?? '')
         setLisaApiUrl(d.lisaApiUrl ?? '')
         setLisaAgentId(d.lisaAgentId ?? '')
@@ -135,7 +139,7 @@ export default function IntegracionesPage() {
       const res = await fetch('/api/admin/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mpPublicKey, mpAccessToken, mpClientId }),
+        body: JSON.stringify({ mpPublicKey, mpAccessToken, mpClientId, mpTestUser, mpTestPass }),
       })
       const data = await res.json()
       setMpMessage(data.message ?? 'Guardado')
@@ -380,19 +384,31 @@ export default function IntegracionesPage() {
 
                       {/* Sandbox test credentials */}
                       {mpSandbox && (
-                        <div className="mt-4 rounded-lg bg-amber-500/5 border border-amber-500/10 p-3">
-                          <p className="text-xs font-semibold text-amber-400 mb-2">Credenciales de comprador de prueba</p>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="mt-4 rounded-lg bg-amber-500/5 border border-amber-500/10 p-3 space-y-3">
+                          <p className="text-xs font-semibold text-amber-400">Credenciales de comprador de prueba</p>
+                          <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <span className="text-muted-foreground">Usuario:</span>
-                              <p className="font-mono text-foreground select-all">TESTUSER1223356577219787944</p>
+                              <label className="mb-1 block text-[11px] text-muted-foreground">Usuario</label>
+                              <Input
+                                type="text"
+                                placeholder="TESTUSER..."
+                                value={mpTestUser}
+                                onChange={(e) => setMpTestUser(e.target.value)}
+                                className="bg-card border-amber-500/20 font-mono text-xs"
+                              />
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Contraseña:</span>
-                              <p className="font-mono text-foreground select-all">XrxReX6Eyf</p>
+                              <label className="mb-1 block text-[11px] text-muted-foreground">Contraseña</label>
+                              <Input
+                                type="text"
+                                placeholder="Contraseña de prueba"
+                                value={mpTestPass}
+                                onChange={(e) => setMpTestPass(e.target.value)}
+                                className="bg-card border-amber-500/20 font-mono text-xs"
+                              />
                             </div>
                           </div>
-                          <p className="mt-2 text-[11px] text-muted-foreground/60">
+                          <p className="text-[11px] text-muted-foreground/60">
                             Usa estas credenciales al pagar en MercadoPago sandbox para simular un comprador
                           </p>
                         </div>
