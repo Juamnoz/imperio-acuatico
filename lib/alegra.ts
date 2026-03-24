@@ -94,6 +94,34 @@ export async function getAllCategories(): Promise<AlegraCategory[]> {
   return all
 }
 
+// ── Crear producto ──
+
+export async function createItem(data: {
+  name: string
+  description?: string | null
+  price: number
+  stock?: number
+  categoryId?: string | null
+}): Promise<AlegraItem> {
+  const body: any = {
+    name: data.name,
+    type: 'product',
+    price: [{ price: data.price }],
+  }
+  if (data.description) body.description = data.description
+  if (data.stock !== undefined && data.stock > 0) {
+    body.inventory = { initialQuantity: data.stock, unit: 'unit' }
+  }
+  if (data.categoryId) {
+    body.itemCategory = { id: Number(data.categoryId) }
+  }
+
+  return alegraFetch<AlegraItem>('/items', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
 // ── Contactos ──
 
 export async function findOrCreateContact(data: {

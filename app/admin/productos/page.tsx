@@ -5,7 +5,7 @@ import {
   Search, ChevronLeft, ChevronRight, Package,
   Star, Loader2, Check, ImagePlus, X, GripVertical,
   Upload, Trash2, Eye, EyeOff, ArrowLeft,
-  Save, MoreHorizontal, ExternalLink,
+  Save, MoreHorizontal, ExternalLink, Plus,
 } from 'lucide-react'
 import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
@@ -40,6 +40,7 @@ function ProductEditor({
   onSave: () => void
   onClose: () => void
 }) {
+  const isNew = !product.id
   const [form, setForm] = useState({
     name: product.name,
     description: product.description || '',
@@ -104,15 +105,32 @@ function ProductEditor({
 
   async function handleSave() {
     setSaving(true)
-    await fetch('/api/admin/products', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        productId: product.id,
-        ...form,
-        images: JSON.stringify(images),
-      }),
-    })
+    if (isNew) {
+      const res = await fetch('/api/admin/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          images: JSON.stringify(images),
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.error || 'Error al crear producto')
+        setSaving(false)
+        return
+      }
+    } else {
+      await fetch('/api/admin/products', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.id,
+          ...form,
+          images: JSON.stringify(images),
+        }),
+      })
+    }
     setSaving(false)
     onSave()
   }
@@ -128,6 +146,11 @@ function ProductEditor({
           <ArrowLeft className="h-4 w-4" /> Volver a productos
         </button>
         <div className="flex items-center gap-2">
+          {isNew && (
+            <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 text-xs">
+              Nuevo producto
+            </Badge>
+          )}
           {product.alegraId && (
             <Badge variant="outline" className="border-primary/20 text-xs">
               Alegra #{product.alegraId}
@@ -135,11 +158,11 @@ function ProductEditor({
           )}
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !form.name || !form.categoryId}
             className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Guardar
+            {isNew ? 'Crear producto' : 'Guardar'}
           </button>
         </div>
       </div>
@@ -530,14 +553,30 @@ export default function ProductosPage() {
     setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, [field]: value } : p)))
   }
 
-  // ─── Editor mode ───
-  if (editing) {
+  const [creating, setCreating] = useState(false)
+
+  // ─── Editor mode (edit or create) ───
+  if (editing || creating) {
+    const editorProduct = editing || {
+      name: '',
+      description: '',
+      price: 0,
+      stock: 0,
+      available: true,
+      featured: false,
+      categoryId: categories[0]?.id || '',
+      temperament: '',
+      careLevel: '',
+      tankMin: 0,
+      tags: '[]',
+      images: '[]',
+    }
     return (
       <ProductEditor
-        product={editing}
+        product={editorProduct}
         categories={categories}
-        onSave={() => { setEditing(null); fetchProducts() }}
-        onClose={() => setEditing(null)}
+        onSave={() => { setEditing(null); setCreating(false); fetchProducts() }}
+        onClose={() => { setEditing(null); setCreating(false) }}
       />
     )
   }
@@ -545,9 +584,18 @@ export default function ProductosPage() {
   // ─── List mode ───
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Productos</h1>
-        <p className="text-sm text-muted-foreground">{total} productos sincronizados desde Alegra</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Productos</h1>
+          <p className="text-sm text-muted-foreground">{total} productos sincronizados desde Alegra</p>
+        </div>
+        <button
+          onClick={() => setCreating(true)}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          <Plus className="h-4 w-4" />
+          Crear producto
+        </button>
       </div>
 
       {/* Filters */}
