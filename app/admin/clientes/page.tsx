@@ -1,23 +1,34 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
   Users, Mail, Phone, MapPin, ShoppingCart,
-  CheckCircle, XCircle, Clock, Search, Send,
-  Loader2,
+  CheckCircle, XCircle, Search, Send,
+  Loader2, Plus, Pencil, RotateCw, UserPlus,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogFooter,
+} from '@/components/ui/dialog'
 
 interface Customer {
+  id: string | null
   name: string
   email: string
   phone: string
   city: string
+  address: string
+  notes: string | null
   orders: number
   totalSpent: number
   lastOrder: string
   paidOrders: number
+  isRegistered: boolean
 }
 
 interface EmailLog {
@@ -47,6 +58,8 @@ function timeAgo(date: string) {
   return new Date(date).toLocaleDateString('es-CO')
 }
 
+const emptyForm = { name: '', email: '', phone: '', city: '', address: '', notes: '' }
+
 export default function ClientesPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [emails, setEmails] = useState<EmailLog[]>([])
@@ -54,7 +67,23 @@ export default function ClientesPage() {
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState<'customers' | 'emails'>('customers')
 
-  useEffect(() => {
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [form, setForm] = useState(emptyForm)
+  const [saving, setSaving] = useState(false)
+  const [modalError, setModalError] = useState('')
+
+  // Resend email modal
+  const [resendOpen, setResendOpen] = useState(false)
+  const [resendEmail, setResendEmail] = useState<EmailLog | null>(null)
+  const [resendTo, setResendTo] = useState('')
+  const [resending, setResending] = useState(false)
+  const [resendSuccess, setResendSuccess] = useState(false)
+
+  const fetchData = useCallback(() => {
+    setLoading(true)
     fetch('/api/admin/customers')
       .then((r) => r.json())
       .then((data) => {
@@ -63,6 +92,8 @@ export default function ClientesPage() {
       })
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => { fetchData() }, [fetchData])
 
   const filteredCustomers = customers.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -81,14 +112,117 @@ export default function ClientesPage() {
   const sentEmails = emails.filter((e) => e.status === 'sent').length
   const failedEmails = emails.filter((e) => e.status === 'failed').length
 
+  // Open create modal
+  function openCreate() {
+    setForm(emptyForm)
+    setEditingId(null)
+    setModalMode('create')
+    setModalError('')
+    setModalOpen(true)
+  }
+
+  // Open edit modal
+  function openEdit(customer: Customer) {
+    setForm({
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      city: customer.city,
+      address: customer.address || '',
+      notes: customer.notes || '',
+    })
+    setEditingId(customer.id)
+    setModalMode('edit')
+    setModalError('')
+    setModalOpen(true)
+  }
+
+  // Save customer (create or edit)
+  async function handleSave() {
+    if (!form.name || !form.email || !form.phone || !form.city) {
+      setModalError('Nombre, email, teléfono y ciudad son requeridos')
+      return
+    }
+    setSaving(true)
+    setModalError('')
+    try {
+      const isEdit = modalMode === 'edit' && editingId
+      const res = await fetch('/api/admin/customers', {
+        method: isEdit ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(isEdit ? { id: editingId, ...form } : form),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setModalError(data.error || 'Error guardando cliente')
+        return
+      }
+      setModalOpen(false)
+      fetchData()
+    } catch {
+      setModalError('Error de conexión')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Open resend email modal
+  function openResend(email: EmailLog) {
+    setResendEmail(email)
+    setResendTo(email.to)
+    setResendSuccess(false)
+    setResendOpen(true)
+  }
+
+  // Resend email
+  async function handleResend() {
+    if (!resendEmail?.orderId) return
+    setResending(true)
+    try {
+      const res = await fetch('/api/admin/customers/resend-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: resendEmail.orderId, toEmail: resendTo }),
+      })
+      if (res.ok) {
+        setResendSuccess(true)
+        fetchData()
+      }
+    } catch { /* ignore */ } finally {
+      setResending(false)
+    }
+  }
+
+  // Register an orphan customer (from orders)
+  async function registerOrphan(customer: Customer) {
+    setForm({
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      city: customer.city,
+      address: customer.address || '',
+      notes: '',
+    })
+    setEditingId(null)
+    setModalMode('create')
+    setModalError('')
+    setModalOpen(true)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-2xl font-bold">Clientes & Emails</h1>
-        <p className="text-sm text-muted-foreground">
-          {customers.length} clientes · {totalEmails} emails enviados
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Clientes & Emails</h1>
+          <p className="text-sm text-muted-foreground">
+            {customers.length} clientes · {totalEmails} emails enviados
+          </p>
+        </div>
+        <Button onClick={openCreate} className="gap-2">
+          <UserPlus className="h-4 w-4" />
+          Agregar cliente
+        </Button>
       </div>
 
       {/* Stats */}
@@ -183,6 +317,9 @@ export default function ClientesPage() {
           <div className="flex flex-col items-center gap-3 py-20">
             <Users className="h-12 w-12 text-muted-foreground/30" />
             <p className="text-sm text-muted-foreground">No hay clientes aún</p>
+            <Button variant="outline" onClick={openCreate} className="gap-2 mt-2">
+              <Plus className="h-4 w-4" /> Agregar primer cliente
+            </Button>
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-primary/10 bg-card">
@@ -194,6 +331,7 @@ export default function ClientesPage() {
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center">Pedidos</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">Total gastado</th>
                   <th className="hidden px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:table-cell text-right">Último pedido</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center w-20">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-primary/5">
@@ -205,7 +343,14 @@ export default function ClientesPage() {
                           {customer.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{customer.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium">{customer.name}</p>
+                            {!customer.isRegistered && (
+                              <Badge variant="outline" className="text-[9px] border-amber-400/30 text-amber-400">
+                                Sin registrar
+                              </Badge>
+                            )}
+                          </div>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Mail className="h-3 w-3" /> {customer.email}
@@ -236,6 +381,27 @@ export default function ClientesPage() {
                     <td className="hidden px-5 py-3 text-right sm:table-cell">
                       <span className="text-xs text-muted-foreground">{timeAgo(customer.lastOrder)}</span>
                     </td>
+                    <td className="px-5 py-3 text-center">
+                      {customer.isRegistered ? (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => openEdit(customer)}
+                          title="Editar cliente"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => registerOrphan(customer)}
+                          title="Registrar cliente"
+                        >
+                          <UserPlus className="h-4 w-4 text-amber-400" />
+                        </Button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -260,6 +426,7 @@ export default function ClientesPage() {
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center">Tipo</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center">Estado</th>
                   <th className="hidden px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:table-cell text-right">Fecha</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center w-20">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-primary/5">
@@ -306,6 +473,18 @@ export default function ClientesPage() {
                     <td className="hidden px-5 py-3 text-right sm:table-cell">
                       <span className="text-xs text-muted-foreground">{timeAgo(email.createdAt)}</span>
                     </td>
+                    <td className="px-5 py-3 text-center">
+                      {email.orderId && (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => openResend(email)}
+                          title="Reenviar email"
+                        >
+                          <RotateCw className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -313,6 +492,156 @@ export default function ClientesPage() {
           </div>
         )
       )}
+
+      {/* Create/Edit Customer Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-md bg-card border-primary/10">
+          <DialogHeader>
+            <DialogTitle>
+              {modalMode === 'create' ? 'Agregar cliente' : 'Editar cliente'}
+            </DialogTitle>
+            <DialogDescription>
+              {modalMode === 'create'
+                ? 'Ingresa los datos del nuevo cliente.'
+                : 'Modifica los datos del cliente.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nombre *</Label>
+                <Input
+                  id="name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Nombre completo"
+                  className="bg-background border-primary/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="correo@ejemplo.com"
+                  className="bg-background border-primary/10"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Teléfono *</Label>
+                <Input
+                  id="phone"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="3001234567"
+                  className="bg-background border-primary/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">Ciudad *</Label>
+                <Input
+                  id="city"
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  placeholder="Medellín"
+                  className="bg-background border-primary/10"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="address">Dirección</Label>
+              <Input
+                id="address"
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                placeholder="Dirección de envío"
+                className="bg-background border-primary/10"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notas</Label>
+              <Textarea
+                id="notes"
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                placeholder="Notas internas sobre el cliente..."
+                className="bg-background border-primary/10 min-h-[80px]"
+              />
+            </div>
+            {modalError && (
+              <p className="text-sm text-red-400">{modalError}</p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalOpen(false)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} disabled={saving} className="gap-2">
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              {modalMode === 'create' ? 'Crear cliente' : 'Guardar cambios'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resend Email Modal */}
+      <Dialog open={resendOpen} onOpenChange={setResendOpen}>
+        <DialogContent className="sm:max-w-md bg-card border-primary/10">
+          <DialogHeader>
+            <DialogTitle>Reenviar email</DialogTitle>
+            <DialogDescription>
+              Puedes cambiar el destinatario antes de reenviar.
+            </DialogDescription>
+          </DialogHeader>
+
+          {resendSuccess ? (
+            <div className="flex flex-col items-center gap-3 py-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/15">
+                <CheckCircle className="h-6 w-6 text-emerald-400" />
+              </div>
+              <p className="text-sm font-medium">Email reenviado exitosamente</p>
+              <Button variant="outline" onClick={() => setResendOpen(false)}>
+                Cerrar
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4">
+                <div className="rounded-lg border border-primary/10 bg-background p-3">
+                  <p className="text-xs text-muted-foreground mb-1">Asunto original</p>
+                  <p className="text-sm">{resendEmail?.subject}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="resend-to">Destinatario</Label>
+                  <Input
+                    id="resend-to"
+                    type="email"
+                    value={resendTo}
+                    onChange={(e) => setResendTo(e.target.value)}
+                    className="bg-background border-primary/10"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setResendOpen(false)} disabled={resending}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleResend} disabled={resending || !resendTo} className="gap-2">
+                  {resending && <Loader2 className="h-4 w-4 animate-spin" />}
+                  <Send className="h-4 w-4" />
+                  Reenviar
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
