@@ -117,6 +117,12 @@ export default function PedidosPage() {
   const [saving, setSaving] = useState(false)
   const [createError, setCreateError] = useState('')
 
+  // Edit items in detail modal
+  const [editingItems, setEditingItems] = useState(false)
+  const [detailCart, setDetailCart] = useState<CartItem[]>([])
+  const [detailProductSearch, setDetailProductSearch] = useState('')
+  const [savingItems, setSavingItems] = useState(false)
+
   // Delete confirmation
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deletingOrder, setDeletingOrder] = useState<any | null>(null)
@@ -277,9 +283,86 @@ export default function PedidosPage() {
     }
   }
 
+  // Fetch products for edit mode (reuse products state)
+  useEffect(() => {
+    if (!editingItems || products.length > 0) return
+    fetch('/api/admin/products?limit=500')
+      .then((r) => r.json())
+      .then((data) => setProducts((data.products || []).filter((p: SimpleProduct) => p.available)))
+  }, [editingItems, products.length])
+
   function openEditOrder(order: any) {
     setSelected(order)
   }
+
+  function startEditItems() {
+    if (!selected) return
+    setDetailCart(
+      selected.items.map((i: any) => ({
+        productId: i.productId,
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity,
+      }))
+    )
+    setDetailProductSearch('')
+    setEditingItems(true)
+  }
+
+  function cancelEditItems() {
+    setEditingItems(false)
+    setDetailCart([])
+    setDetailProductSearch('')
+  }
+
+  function addToDetailCart(product: SimpleProduct) {
+    setDetailCart((prev) => {
+      const existing = prev.find((i) => i.productId === product.id)
+      if (existing) {
+        return prev.map((i) => i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i)
+      }
+      return [...prev, { productId: product.id, name: product.name, price: product.price, quantity: 1 }]
+    })
+    setDetailProductSearch('')
+  }
+
+  function updateDetailQuantity(productId: string, delta: number) {
+    setDetailCart((prev) =>
+      prev
+        .map((i) => i.productId === productId ? { ...i, quantity: i.quantity + delta } : i)
+        .filter((i) => i.quantity > 0)
+    )
+  }
+
+  function removeFromDetailCart(productId: string) {
+    setDetailCart((prev) => prev.filter((i) => i.productId !== productId))
+  }
+
+  async function saveEditItems() {
+    if (!selected || detailCart.length === 0) return
+    setSavingItems(true)
+    try {
+      const res = await fetch('/api/admin/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: selected.id, items: detailCart }),
+      })
+      const updatedOrder = await res.json()
+      setSelected(updatedOrder)
+      setEditingItems(false)
+      fetchOrders()
+    } catch { /* ignore */ } finally {
+      setSavingItems(false)
+    }
+  }
+
+  const filteredDetailProducts = useMemo(() => {
+    if (!detailProductSearch) return []
+    const q = detailProductSearch.toLowerCase()
+    return products
+      .filter((p) => p.name.toLowerCase().includes(q) && !detailCart.some((c) => c.productId === p.id))
+      .slice(0, 6)
+  }, [detailProductSearch, products, detailCart])
 
   function confirmDelete(order: any) {
     setDeletingOrder(order)
@@ -488,7 +571,7 @@ export default function PedidosPage() {
       )}
 
       {/* Order Detail Dialog */}
-      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+      <Dialog open={!!selected} onOpenChange={(open) => { if (!open) { setSelected(null); setEditingItems(false) } }}>
         <DialogContent className="max-w-lg border-primary/15 bg-card">
           {selected && (
             <>
@@ -518,22 +601,100 @@ export default function PedidosPage() {
 
                 {/* Items */}
                 <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Productos</p>
-                  <div className="divide-y divide-primary/5 rounded-lg border border-primary/10">
-                    {selected.items.map((item: any) => (
-                      <div key={item.id} className="flex items-center justify-between px-4 py-2.5">
-                        <div>
-                          <p className="text-sm">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">x{item.quantity}</p>
-                        </div>
-                        <p className="text-sm font-medium">{formatCOP(item.price * item.quantity)}</p>
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Productos</p>
+                    {!editingItems ? (
+                      <Button variant="ghost" size="xs" onClick={startEditItems} className="gap-1">
+                        <Pencil className="h-3 w-3" /> Editar
+                      </Button>
+                    ) : (
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="xs" onClick={cancelEditItems} disabled={savingItems}>
+                          Cancelar
+                        </Button>
+                        <Button size="xs" onClick={saveEditItems} disabled={savingItems || detailCart.length === 0} className="gap-1">
+                          {savingItems && <Loader2 className="h-3 w-3 animate-spin" />}
+                          Guardar
+                        </Button>
                       </div>
-                    ))}
-                    <div className="flex items-center justify-between bg-muted/20 px-4 py-2.5">
-                      <p className="text-sm font-semibold">Total</p>
-                      <p className="text-sm font-bold text-primary">{formatCOP(selected.total)}</p>
-                    </div>
+                    )}
                   </div>
+
+                  {editingItems ? (
+                    <>
+                      {/* Product search */}
+                      <div className="relative mb-2">
+                        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          placeholder="Agregar producto..."
+                          value={detailProductSearch}
+                          onChange={(e) => setDetailProductSearch(e.target.value)}
+                          className="pl-8 h-8 text-sm bg-background border-primary/10"
+                        />
+                        {filteredDetailProducts.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-40 overflow-y-auto rounded-lg border border-primary/10 bg-card shadow-lg">
+                            {filteredDetailProducts.map((p) => (
+                              <button
+                                key={p.id}
+                                onClick={() => addToDetailCart(p)}
+                                className="flex w-full items-center justify-between px-3 py-2 text-left transition-colors hover:bg-muted/30"
+                              >
+                                <p className="text-sm">{p.name}</p>
+                                <p className="text-xs font-semibold text-primary">{formatCOP(p.price)}</p>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Editable cart */}
+                      <div className="divide-y divide-primary/5 rounded-lg border border-primary/10">
+                        {detailCart.map((item) => (
+                          <div key={item.productId} className="flex items-center justify-between px-3 py-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm truncate">{item.name}</p>
+                              <p className="text-xs text-muted-foreground">{formatCOP(item.price)} c/u</p>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Button variant="ghost" size="icon-xs" onClick={() => updateDetailQuantity(item.productId, -1)}>
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="w-5 text-center text-sm font-semibold">{item.quantity}</span>
+                              <Button variant="ghost" size="icon-xs" onClick={() => updateDetailQuantity(item.productId, 1)}>
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                              <span className="w-16 text-right text-xs font-medium">{formatCOP(item.price * item.quantity)}</span>
+                              <Button variant="ghost" size="icon-xs" onClick={() => removeFromDetailCart(item.productId)} className="text-red-400 hover:text-red-300">
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between bg-muted/20 px-3 py-2">
+                          <p className="text-sm font-semibold">Subtotal</p>
+                          <p className="text-sm font-bold text-primary">
+                            {formatCOP(detailCart.reduce((s, i) => s + i.price * i.quantity, 0))}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="divide-y divide-primary/5 rounded-lg border border-primary/10">
+                      {selected.items.map((item: any) => (
+                        <div key={item.id} className="flex items-center justify-between px-4 py-2.5">
+                          <div>
+                            <p className="text-sm">{item.name}</p>
+                            <p className="text-xs text-muted-foreground">x{item.quantity}</p>
+                          </div>
+                          <p className="text-sm font-medium">{formatCOP(item.price * item.quantity)}</p>
+                        </div>
+                      ))}
+                      <div className="flex items-center justify-between bg-muted/20 px-4 py-2.5">
+                        <p className="text-sm font-semibold">Total</p>
+                        <p className="text-sm font-bold text-primary">{formatCOP(selected.total)}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Status change */}

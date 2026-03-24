@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const { orderId, status, trackingNumber } = await req.json()
+    const { orderId, status, trackingNumber, items } = await req.json()
 
     if (!orderId) {
       return NextResponse.json({ error: 'orderId requerido' }, { status: 400 })
@@ -121,6 +121,24 @@ export async function PATCH(req: NextRequest) {
     const data: any = {}
     if (status) data.status = status
     if (trackingNumber !== undefined) data.trackingNumber = trackingNumber
+
+    // If items are provided, replace all items and recalculate totals
+    if (items && Array.isArray(items)) {
+      await db.orderItem.deleteMany({ where: { orderId } })
+      await db.orderItem.createMany({
+        data: items.map((i: { productId: string; name: string; price: number; quantity: number }) => ({
+          orderId,
+          productId: i.productId,
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+        })),
+      })
+      const subtotal = items.reduce((s: number, i: { price: number; quantity: number }) => s + i.price * i.quantity, 0)
+      const existing = await db.order.findUnique({ where: { id: orderId }, select: { shipping: true } })
+      data.subtotal = subtotal
+      data.total = subtotal + (existing?.shipping ?? 0)
+    }
 
     const order = await db.order.update({
       where: { id: orderId },
