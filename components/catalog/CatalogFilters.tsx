@@ -352,7 +352,7 @@ export function CatalogFilters({ categories, children }: CatalogFiltersProps) {
         {/* Desktop sidebar */}
         <aside className="hidden w-60 shrink-0 lg:block">
           <div className={cn('sticky top-24 transition-opacity', isPending && 'opacity-60')}>
-            <FilterContent />
+            {FilterContent()}
           </div>
         </aside>
 
@@ -423,7 +423,7 @@ export function CatalogFilters({ categories, children }: CatalogFiltersProps) {
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <FilterContent />
+              {FilterContent()}
               <div className="mt-6 pb-6">
                 <button
                   onClick={() => setMobileOpen(false)}
