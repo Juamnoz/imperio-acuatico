@@ -33,9 +33,18 @@ function formatCOP(n: number) {
   }).format(n)
 }
 
+/** Read admin email from SiteSettings, fallback to env, fallback to hardcoded */
+export async function getAdminEmail(): Promise<string> {
+  try {
+    const row = await db.siteSettings.findUnique({ where: { key: 'admin_email' } })
+    if (row?.value) return row.value
+  } catch { /* ignore */ }
+  return process.env.ADMIN_EMAIL ?? 'natyjaramillo81@gmail.com'
+}
+
 export async function sendOrderConfirmation(data: OrderEmailData) {
   const from = process.env.EMAIL_FROM ?? 'Imperio Acuático <pedidos@imperioacuatico.com>'
-  const adminEmail = process.env.ADMIN_EMAIL ?? 'natyjaramillo81@gmail.com'
+  const adminEmail = await getAdminEmail()
 
   try {
     const [customerHtml, adminHtml] = await Promise.all([
@@ -102,5 +111,63 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
   } catch (error) {
     console.error('Email send error:', error)
     return { success: false, error }
+  }
+}
+
+/** Send a test email to verify the configuration works */
+export async function sendTestEmail(toEmail: string) {
+  const from = process.env.EMAIL_FROM ?? 'Imperio Acuático <pedidos@imperioacuatico.com>'
+
+  const testData = {
+    orderId: 'test-00000000',
+    customerName: 'Email de Prueba',
+    customerEmail: toEmail,
+    customerPhone: '3027471832',
+    customerCity: 'Caldas, Antioquia',
+    customerAddress: 'Dirección de prueba',
+    items: [
+      { name: 'Betta Halfmoon (prueba)', quantity: 1, price: 25000 },
+      { name: 'Guppy Cobra (prueba)', quantity: 3, price: 8000 },
+    ],
+    subtotal: 49000,
+    shipping: 0,
+    shippingMethod: 'tienda' as const,
+    total: 49000,
+    type: 'admin' as const,
+  }
+
+  try {
+    const html = await render(OrderConfirmationEmail(testData))
+
+    const result = await resend.emails.send({
+      from,
+      to: toEmail,
+      subject: `[PRUEBA] Nueva venta $49.000 — Email de Prueba`,
+      html,
+    })
+
+    const error = result.error
+      ? `${result.error.name}: ${result.error.message}`
+      : null
+
+    await db.emailLog.create({
+      data: {
+        to: toEmail,
+        subject: '[PRUEBA] Nueva venta $49.000 — Email de Prueba',
+        type: 'admin_notification',
+        resendId: result.data?.id ?? null,
+        status: result.data ? 'sent' : 'failed',
+        errorMessage: error,
+      },
+    }).catch(() => {})
+
+    return {
+      success: !!result.data,
+      resendId: result.data?.id ?? null,
+      error,
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Error desconocido'
+    return { success: false, resendId: null, error: msg }
   }
 }

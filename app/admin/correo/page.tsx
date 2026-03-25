@@ -5,8 +5,10 @@ import {
   Mail, CheckCircle, XCircle, Search, Send,
   Loader2, AlertTriangle, ShoppingCart, User,
   Phone, MapPin, ExternalLink, RefreshCw,
+  Settings, Save, TestTube,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -79,6 +81,17 @@ export default function CorreoAdminPage() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'sent' | 'failed'>('all')
 
+  // Admin email config
+  const [adminEmail, setAdminEmail] = useState('')
+  const [adminEmailInput, setAdminEmailInput] = useState('')
+  const [savingEmail, setSavingEmail] = useState(false)
+  const [emailSaved, setEmailSaved] = useState(false)
+
+  // Test email
+  const [testEmail, setTestEmail] = useState('')
+  const [sendingTest, setSendingTest] = useState(false)
+  const [testResult, setTestResult] = useState<{ success: boolean; error?: string | null } | null>(null)
+
   // Detail modal
   const [selected, setSelected] = useState<AdminNotification | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
@@ -94,6 +107,11 @@ export default function CorreoAdminPage() {
       .then((data) => {
         setNotifications(data.notifications || [])
         setStats(data.stats || { total: 0, sent: 0, failed: 0 })
+        if (data.adminEmail) {
+          setAdminEmail(data.adminEmail)
+          setAdminEmailInput(data.adminEmail)
+          if (!testEmail) setTestEmail(data.adminEmail)
+        }
       })
       .finally(() => setLoading(false))
   }, [])
@@ -112,6 +130,46 @@ export default function CorreoAdminPage() {
       n.order?.customerEmail.toLowerCase().includes(search.toLowerCase()) ||
       n.errorMessage?.toLowerCase().includes(search.toLowerCase())
     )
+
+  async function saveAdminEmail() {
+    if (!adminEmailInput.includes('@')) return
+    setSavingEmail(true)
+    setEmailSaved(false)
+    try {
+      const res = await fetch('/api/admin/correo', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminEmail: adminEmailInput }),
+      })
+      if (res.ok) {
+        setAdminEmail(adminEmailInput)
+        setEmailSaved(true)
+        setTimeout(() => setEmailSaved(false), 3000)
+      }
+    } catch { /* ignore */ } finally {
+      setSavingEmail(false)
+    }
+  }
+
+  async function handleSendTest() {
+    if (!testEmail.includes('@')) return
+    setSendingTest(true)
+    setTestResult(null)
+    try {
+      const res = await fetch('/api/admin/correo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toEmail: testEmail }),
+      })
+      const data = await res.json()
+      setTestResult(data)
+      fetchData()
+    } catch {
+      setTestResult({ success: false, error: 'Error de conexión' })
+    } finally {
+      setSendingTest(false)
+    }
+  }
 
   function openDetail(notif: AdminNotification) {
     setSelected(notif)
@@ -152,6 +210,96 @@ export default function CorreoAdminPage() {
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           Actualizar
         </Button>
+      </div>
+
+      {/* Config section */}
+      <div className="rounded-xl border border-primary/10 bg-card p-5 space-y-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Settings className="h-4 w-4 text-primary" />
+          <h2 className="text-sm font-semibold">Configuración de correo</h2>
+        </div>
+
+        {/* Admin email */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1 space-y-1.5">
+            <Label htmlFor="admin-email" className="text-xs text-muted-foreground">
+              Correo del administrador
+            </Label>
+            <p className="text-[11px] text-muted-foreground/70">
+              Aquí llegarán las notificaciones de nuevas ventas
+            </p>
+            <Input
+              id="admin-email"
+              type="email"
+              value={adminEmailInput}
+              onChange={(e) => setAdminEmailInput(e.target.value)}
+              placeholder="admin@ejemplo.com"
+              className="bg-background border-primary/10"
+            />
+          </div>
+          <Button
+            onClick={saveAdminEmail}
+            disabled={savingEmail || adminEmailInput === adminEmail || !adminEmailInput.includes('@')}
+            className="gap-2 shrink-0"
+          >
+            {savingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Guardar
+          </Button>
+        </div>
+        {emailSaved && (
+          <div className="flex items-center gap-2 rounded-md bg-emerald-500/10 px-3 py-2">
+            <CheckCircle className="h-4 w-4 text-emerald-400" />
+            <span className="text-xs text-emerald-400">Correo admin actualizado correctamente</span>
+          </div>
+        )}
+
+        {/* Test email */}
+        <div className="border-t border-primary/10 pt-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="test-email" className="text-xs text-muted-foreground">
+                Enviar email de prueba
+              </Label>
+              <p className="text-[11px] text-muted-foreground/70">
+                Envía un email de prueba para verificar que la configuración funciona
+              </p>
+              <Input
+                id="test-email"
+                type="email"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                placeholder="correo@ejemplo.com"
+                className="bg-background border-primary/10"
+              />
+            </div>
+            <Button
+              onClick={handleSendTest}
+              disabled={sendingTest || !testEmail.includes('@')}
+              variant="outline"
+              className="gap-2 shrink-0"
+            >
+              {sendingTest ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Enviar prueba
+            </Button>
+          </div>
+          {testResult && (
+            <div className={`mt-3 flex items-center gap-2 rounded-md px-3 py-2 ${
+              testResult.success ? 'bg-emerald-500/10' : 'bg-red-500/10'
+            }`}>
+              {testResult.success ? (
+                <>
+                  <CheckCircle className="h-4 w-4 text-emerald-400" />
+                  <span className="text-xs text-emerald-400">Email enviado correctamente a {testEmail}</span>
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-4 w-4 text-red-400" />
+                  <span className="text-xs text-red-400">Error: {testResult.error || 'Error desconocido'}</span>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
