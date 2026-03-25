@@ -9,6 +9,7 @@ import {
   Plug,
   Users,
   BarChart3,
+  Mail,
   Fish,
   ChevronLeft,
   Menu,
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingCart },
   { href: '/admin/productos', label: 'Productos', icon: Package },
   { href: '/admin/clientes', label: 'Clientes', icon: Users },
+  { href: '/admin/correo', label: 'Correo', icon: Mail },
   { href: '/admin/analitica', label: 'Analítica', icon: BarChart3 },
   { href: '/admin/integraciones', label: 'Integraciones', icon: Plug },
 ]

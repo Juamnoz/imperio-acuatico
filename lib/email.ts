@@ -43,22 +43,32 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
       render(OrderConfirmationEmail({ ...data, type: 'admin' })),
     ])
 
-    const [customerResult, adminResult] = await Promise.all([
-      resend.emails.send({
-        from,
-        to: data.customerEmail,
-        subject: `¡Pedido confirmado! #${data.orderId.slice(-8).toUpperCase()} — Imperio Acuático`,
-        html: customerHtml,
-      }),
-      resend.emails.send({
-        from,
-        to: adminEmail,
-        subject: `Nueva venta ${formatCOP(data.total)} — ${data.customerName}`,
-        html: adminHtml,
-      }),
-    ])
+    // Send emails independently so one failure doesn't block the other
+    const customerResult = await resend.emails.send({
+      from,
+      to: data.customerEmail,
+      subject: `¡Pedido confirmado! #${data.orderId.slice(-8).toUpperCase()} — Imperio Acuático`,
+      html: customerHtml,
+    })
 
-    // Log emails to database
+    const adminResult = await resend.emails.send({
+      from,
+      to: adminEmail,
+      subject: `Nueva venta ${formatCOP(data.total)} — ${data.customerName}`,
+      html: adminHtml,
+    })
+
+    // Log with detailed error messages
+    const customerError = customerResult.error
+      ? `${customerResult.error.name}: ${customerResult.error.message}`
+      : null
+    const adminError = adminResult.error
+      ? `${adminResult.error.name}: ${adminResult.error.message}`
+      : null
+
+    if (customerError) console.error('Customer email error:', customerError)
+    if (adminError) console.error('Admin email error:', adminError)
+
     await Promise.all([
       db.emailLog.create({
         data: {
@@ -68,6 +78,7 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
           orderId: data.orderId,
           resendId: customerResult.data?.id ?? null,
           status: customerResult.data ? 'sent' : 'failed',
+          errorMessage: customerError,
         },
       }),
       db.emailLog.create({
@@ -78,11 +89,15 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
           orderId: data.orderId,
           resendId: adminResult.data?.id ?? null,
           status: adminResult.data ? 'sent' : 'failed',
+          errorMessage: adminError,
         },
       }),
     ]).catch((err) => console.error('Email log error:', err))
 
-    console.log('Emails sent:', { customer: customerResult, admin: adminResult })
+    console.log('Emails sent:', {
+      customer: { id: customerResult.data?.id, error: customerError },
+      admin: { id: adminResult.data?.id, error: adminError },
+    })
     return { success: true, customerResult, adminResult }
   } catch (error) {
     console.error('Email send error:', error)
