@@ -2,7 +2,7 @@ import { Resend } from 'resend'
 import { db } from '@/lib/db'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const LOGO_URL = 'https://imperioacuatico.com/logo-teal.png'
+const LOGO_URL = 'https://www.imperioacuatico.com/logo-teal.png'
 
 interface OrderItem {
   name: string
