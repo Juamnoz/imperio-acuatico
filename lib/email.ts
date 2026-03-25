@@ -2,7 +2,7 @@ import { Resend } from 'resend'
 import { db } from '@/lib/db'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const LOGO_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAYAAAA5ZDbSAAAAAXNSR0IArs4c6QAAAQplWElmTU0AKgAAAAgABwESAAMAAAABAAEAAAEaAAUAAAABAAAAYgEbAAUAAAABAAAAagEoAAMAAAABAAIAAAExAAIAAAA5AAAAcgE7AAIAAAAQAAAArIdpAAQAAAABAAAAvAAAAAAAAABgAAAAAQAAAGAAAAABQ2FudmEgZG9jPURBR1JuVWF1WXg0IHVzZXI9VUFFZXczeWI4VjQgYnJhbmQ9QkFFZXd6NGtDM1EAAEhlbGVuIEphcmFtaWxsbwAABpAAAAcAAAAEMDIxMJEBAAcAAAAEAQIDAKAAAAcAAAAEMDEwMKABAAMAAAABAAEAAKACAAQAAAABAAAAeKADAAQAAAABAAAAeAAAAADhg+diAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAGOmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNi4wLjAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczpleGlmPSJodHRwOi8vbnMuYWRvYmUuY29tL2V4aWYvMS4wLyIKICAgICAgICAgICAgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIgogICAgICAgICAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgICAgICAgICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIj4KICAgICAgICAgPGV4aWY6Q29sb3JTcGFjZT42NTUzNTwvZXhpZjpDb2xvclNwYWNlPgogICAgICAgICA8ZXhpZjpQaXhlbFhEaW1lbnNpb24+MTA4MDwvZXhpZjpQaXhlbFhEaW1lbnNpb24+CiAgICAgICAgIDxleGlmOkV4aWZWZXJzaW9uPjAyMTA8L2V4aWY6RXhpZlZlcnNpb24+CiAgICAgICAgIDxleGlmOkZsYXNoUGl4VmVyc2lvbj4wMTAwPC9leGlmOkZsYXNoUGl4VmVyc2lvbj4KICAgICAgICAgPGV4aWY6UGl4ZWxZRGltZW5zaW9uPjEwODA8L2V4aWY6UGl4ZWxZRGltZW5zaW9uPgogICAgICAgICA8ZXhpZjpDb21wb25lbnRzQ29uZmlndXJhdGlvbj4KICAgICAgICAgICAgPHJkZjpTZXE+CiAgICAgICAgICAgICAgIDxyZGY6bGk+MTwvcmRmOmxpPgogICAgICAgICAgICAgICA8cmRmOmxpPjI8L3JkZjpsaT4KICAgICAgICAgICAgICAgPHJkZjpsaT4zPC9yZGY6bGk+CiAgICAgICAgICAgICAgIDxyZGY6bGk+MDwvcmRmOmxpPgogICAgICAgICAgICA8L3JkZjpTZXE+CiAgICAgICAgIDwvZXhpZjpDb21wb25lbnRzQ29uZmlndXJhdGlvbj4KICAgICAgICAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSBkb2M9REFHUm5VYXVZeDQgdXNlcj1VQUVldzN5YjhWNCBicmFuZD1CQUVld3o0a0MzUTwveG1wOkNyZWF0b3JUb29sPgogICAgICAgICA8dGlmZjpSZXNvbHV0aW9uVW5pdD4yPC90aWZmOlJlc29sdXRpb25Vbml0PgogICAgICAgICA8dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPgogICAgICAgICA8dGlmZjpYUmVzb2x1dGlvbj45NjwvdGlmZjpYUmVzb2x1dGlvbj4KICAgICAgICAgPHRpZmY6WVJlc29sdXRpb24+OTY8L3RpZmY6WVJlc29sdXRpb24+CiAgICAgICAgIDxkYzp0aXRsZT4KICAgICAgICAgICAgPHJkZjpBbHQ+CiAgICAgICAgICAgICAgIDxyZGY6bGkgeG1sOmxhbmc9IngtZGVmYXVsdCI+Z29ub3BvZGlvIC0gNTE8L3JkZjpsaT4KICAgICAgICAgICAgPC9yZGY6QWx0PgogICAgICAgICA8L2RjOnRpdGxlPgogICAgICAgICA8ZGM6Y3JlYXRvcj4KICAgICAgICAgICAgPHJkZjpTZXE+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'
+const LOGO_URL = 'https://imperioacuatico.com/logo-teal.png'
 
 interface OrderItem {
   name: string
@@ -70,7 +70,7 @@ function customerConfirmationHtml(data: OrderEmailData) {
 
     <!-- Header -->
     <div style="background: linear-gradient(135deg, #0D7377 0%, #0a5558 100%); padding: 32px; text-align: center;">
-      <img src="${LOGO_BASE64}" alt="Imperio Acuático" width="80" height="80" style="display: block; margin: 0 auto 12px;" />
+      <img src="${LOGO_URL}" alt="Imperio Acuático" width="80" height="80" style="display: block; margin: 0 auto 12px;" />
       <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">
         Imperio Acuático
       </h1>
@@ -185,7 +185,7 @@ function adminNotificationHtml(data: OrderEmailData) {
       <table style="width: 100%;">
         <tr>
           <td style="vertical-align: middle;">
-            <img src="${LOGO_BASE64}" alt="Imperio Acuático" width="40" height="40" style="display: inline-block; vertical-align: middle; margin-right: 12px;" />
+            <img src="${LOGO_URL}" alt="Imperio Acuático" width="40" height="40" style="display: inline-block; vertical-align: middle; margin-right: 12px;" />
             <h1 style="margin: 0; font-size: 20px; font-weight: 800; color: #ffffff; display: inline-block; vertical-align: middle;">
               Imperio Acuático
             </h1>
@@ -300,7 +300,7 @@ function adminNotificationHtml(data: OrderEmailData) {
 }
 
 export async function sendOrderConfirmation(data: OrderEmailData) {
-  const from = process.env.EMAIL_FROM ?? 'Imperio Acuático <onboarding@resend.dev>'
+  const from = process.env.EMAIL_FROM ?? 'Imperio Acuático <pedidos@imperioacuatico.com>'
   const adminEmail = process.env.ADMIN_EMAIL ?? 'natyjaramillo81@gmail.com'
 
   try {
